@@ -1,0 +1,285 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS Security Analysis Tool - Lambda Deployment
+
+Parameters:
+  S3BucketName:
+    Type: String
+    Description: S3 bucket name for storing reports
+    Default: aws-security-tool-reports
+  
+  ScanSchedule:
+    Type: String
+    Description: Schedule for automated scans (cron expression)
+    Default: "cron(0 2 * * ? *)"  # Daily at 2 AM UTC
+  
+  EmailNotification:
+    Type: String
+    Description: Email address for notifications (optional)
+    Default: ""
+
+Conditions:
+  HasEmailNotification: !Not [!Equals [!Ref EmailNotification, ""]]
+
+Resources:
+  # S3 Bucket for Reports
+  ReportsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${S3BucketName}-${AWS::AccountId}"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldReports
+            Status: Enabled
+            ExpirationInDays: 90
+            NoncurrentVersionExpirationInDays: 30
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Application
+          Value: AWSSecurityTool
+        - Key: Purpose
+          Value: SecurityReports
+
+  # IAM Role for Lambda
+  SecurityToolLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AWSSecurityToolLambdaRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: SecurityToolScanPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              # S3 permissions for reports
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                  - s3:GetObject
+                Resource:
+                  - !Sub "${ReportsBucket.Arn}/*"
+              
+              # Read-only permissions for security scanning
+              - Effect: Allow
+                Action:
+                  # IAM read permissions
+                  - iam:GetAccountPasswordPolicy
+                  - iam:GetCredentialReport
+                  - iam:GenerateCredentialReport
+                  - iam:GetLoginProfile
+                  - iam:ListAccessKeys
+                  - iam:ListAttachedRolePolicies
+                  - iam:ListAttachedUserPolicies
+                  - iam:ListEntitiesForPolicy
+                  - iam:ListGroupPolicies
+                  - iam:ListGroups
+                  - iam:ListGroupsForUser
+                  - iam:ListInstanceProfiles
+                  - iam:ListMFADevices
+                  - iam:ListPolicies
+                  - iam:ListPolicyVersions
+                  - iam:ListRolePolicies
+                  - iam:ListRoles
+                  - iam:ListRoleTags
+                  - iam:ListUserPolicies
+                  - iam:ListUsers
+                  - iam:ListUserTags
+                  - iam:GetPolicy
+                  - iam:GetPolicyVersion
+                  - iam:GetRole
+                  - iam:GetRolePolicy
+                  - iam:GetUser
+                  - iam:GetUserPolicy
+                  
+                  # EC2 read permissions (for future use)
+                  - ec2:DescribeInstances
+                  - ec2:DescribeSecurityGroups
+                  - ec2:DescribeNetworkAcls
+                  - ec2:DescribeVpcs
+                  - ec2:DescribeSubnets
+                  - ec2:DescribeVolumes
+                  - ec2:DescribeSnapshots
+                  - ec2:DescribeRegions
+                  
+                  # S3 read permissions (for future use)
+                  - s3:ListAllMyBuckets
+                  - s3:GetBucketAcl
+                  - s3:GetBucketPolicy
+                  - s3:GetBucketPolicyStatus
+                  - s3:GetBucketPublicAccessBlock
+                  - s3:GetBucketVersioning
+                  - s3:GetBucketEncryption
+                  - s3:GetBucketLogging
+                  
+                  # Other service permissions
+                  - sts:GetCallerIdentity
+                  - cloudtrail:LookupEvents
+                Resource: "*"
+      Tags:
+        - Key: Application
+          Value: AWSSecurityTool
+
+  # Lambda Function
+  SecurityScanFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: AWSSecurityScanFunction
+      Runtime: python3.11
+      Handler: lambda_handler.handler
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime
+          
+          def handler(event, context):
+              # This is a placeholder - in production, you would package
+              # the actual aws-security-tool code with the Lambda
+              
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps({
+                      'message': 'Security scan completed',
+                      'timestamp': datetime.utcnow().isoformat()
+                  })
+              }
+      Role: !GetAtt SecurityToolLambdaRole.Arn
+      Timeout: 900  # 15 minutes
+      MemorySize: 1024
+      Environment:
+        Variables:
+          REPORT_BUCKET: !Ref ReportsBucket
+          SCAN_SERVICES: "iam"
+      Tags:
+        - Key: Application
+          Value: AWSSecurityTool
+
+  # EventBridge Rule for Scheduled Scans
+  ScheduledScanRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: AWSSecurityToolScheduledScan
+      Description: Scheduled security scans
+      ScheduleExpression: !Ref ScanSchedule
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt SecurityScanFunction.Arn
+          Id: SecurityScanTarget
+
+  # Permission for EventBridge to invoke Lambda
+  ScheduledScanPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref SecurityScanFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ScheduledScanRule.Arn
+
+  # SNS Topic for Notifications (optional)
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Condition: HasEmailNotification
+    Properties:
+      TopicName: AWSSecurityToolNotifications
+      DisplayName: AWS Security Tool Notifications
+      Subscriptions:
+        - Endpoint: !Ref EmailNotification
+          Protocol: email
+      Tags:
+        - Key: Application
+          Value: AWSSecurityTool
+
+  # CloudWatch Log Group
+  SecurityScanLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${SecurityScanFunction}"
+      RetentionInDays: 30
+
+  # CloudWatch Dashboard
+  SecurityDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: AWSSecurityToolDashboard
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Lambda", "Invocations", { "stat": "Sum" } ],
+                  [ ".", "Errors", { "stat": "Sum" } ],
+                  [ ".", "Duration", { "stat": "Average" } ]
+                ],
+                "period": 300,
+                "stat": "Average",
+                "region": "${AWS::Region}",
+                "title": "Lambda Function Metrics",
+                "yAxis": {
+                  "left": {
+                    "min": 0
+                  }
+                }
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 6,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '${SecurityScanLogGroup}' | fields @timestamp, @message | sort @timestamp desc | limit 100",
+                "region": "${AWS::Region}",
+                "title": "Recent Security Scan Logs"
+              }
+            }
+          ]
+        }
+
+Outputs:
+  ReportsBucketName:
+    Description: S3 bucket for security reports
+    Value: !Ref ReportsBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-ReportsBucket"
+  
+  LambdaFunctionArn:
+    Description: ARN of the security scan Lambda function
+    Value: !GetAtt SecurityScanFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-LambdaFunction"
+  
+  LambdaRoleArn:
+    Description: ARN of the Lambda execution role
+    Value: !GetAtt SecurityToolLambdaRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-LambdaRole"
+  
+  DashboardURL:
+    Description: CloudWatch Dashboard URL
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${SecurityDashboard}"
