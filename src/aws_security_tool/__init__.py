@@ -1,0 +1,1 @@
+"""Main package for aws-security-tool"""
