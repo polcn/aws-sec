@@ -149,11 +149,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Roadmap
 
 ### Planned Features
-- **EC2 Security Scanner**: Instance security, security groups, EBS encryption
-- **VPC Security Scanner**: Network ACLs, security groups, flow logs
 - **RDS Security Scanner**: Database encryption, backups, public access
 - **Lambda Security Scanner**: Function policies, environment variables
 - **CloudTrail Scanner**: Logging configuration, event analysis
 - **Scheduled Scanning**: Automated periodic scans
 - **Dashboard UI**: Web-based interface for reports
 - **Integration**: CI/CD pipeline support, SIEM integration
+- **Container Security**: ECS/EKS security analysis
+- **Cost Optimization**: Security-related cost recommendations

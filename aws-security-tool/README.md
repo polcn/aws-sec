@@ -4,12 +4,17 @@ A comprehensive, open-source AWS security analysis tool that performs automated 
 
 ## Features
 
+- **Multi-Service Security Scanning**: Support for IAM, S3, EC2, and VPC with more services coming soon
 - **Security Findings with Risk Prioritization**: Comprehensive scanning aligned with AWS Well-Architected Security Pillar
 - **Automated Remediation Scripts**: Generate executable Python scripts to fix identified issues
-- **IAM Security Analysis**: Deep analysis of IAM configurations and access patterns
+- **Configuration File Support**: Customize scan behavior, suppress findings, and override severities
+- **IAM Security Analysis**: Deep analysis including MFA enforcement validation
+- **S3 Security Analysis**: Comprehensive bucket security checks including encryption, public access, versioning, and more
+- **EC2 Security Analysis**: Instance security, security groups, EBS encryption, network ACLs, and more
+- **VPC Security Analysis**: Flow logs, endpoints, peering, NAT gateways, route tables, and network configuration
 - **Architecture Diagram Generation**: Auto-generate visual representation of AWS infrastructure
-- **Compliance Framework Mapping**: Map findings to NIST, OWASP, and SOX frameworks
-- **Multi-Format Reporting**: Generate reports in HTML, Markdown, and plain text formats
+- **Compliance Framework Mapping**: Map findings to NIST, CIS, SOX, and OWASP frameworks
+- **Multi-Format Reporting**: Generate reports in HTML, Markdown, JSON, and plain text formats
 
 ## Installation
 
@@ -51,14 +56,20 @@ python -m cli --help
 cd /home/ec2-user/aws-sec
 source venv/bin/activate
 
-# Run a security scan on your AWS account
+# Run a security scan on your AWS account (all services by default)
 python run_tool.py scan
 
 # Generate remediation scripts
 python run_tool.py scan --generate-remediation
 
 # Scan specific services
-python run_tool.py scan --services iam,s3,ec2
+python run_tool.py scan --services iam,s3,ec2,vpc
+
+# Use a configuration file
+python run_tool.py scan --config aws-security-config.yaml
+
+# Generate example configuration
+python run_tool.py generate-config
 
 # Output in different formats
 python run_tool.py scan --output-format html --output-file report.html

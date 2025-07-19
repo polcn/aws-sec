@@ -82,15 +82,20 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m pytest --cov=src --cov-report=term-m
 PYTHONPATH=/home/ec2-user/aws-sec python -m pytest tests/test_s3_scanner.py -v
 ```
 
-Current test coverage:
+Current test coverage (62 total tests):
 - S3 Scanner: 85% coverage with 23 unit tests
+- EC2 Scanner: 76% coverage with 8 unit tests
+- VPC Scanner: 77% coverage with 13 unit tests
+- Configuration: 91% coverage with 18 unit tests
 
 ### Recent Successful Scan
 
 The tool has been successfully tested on AWS account 028358929215 on July 19, 2025:
-- Successfully scanned IAM and S3 configurations
-- Combined scan found 129 security issues across both services
+- Successfully scanned IAM, S3, EC2, and VPC configurations
+- Comprehensive scan found 148 security issues across all services
 - S3-only scan found 110 findings (4 HIGH, 58 MEDIUM, 48 LOW)
+- VPC-only scan found 84 findings (17 HIGH, 67 LOW)
+- Configuration file support allows customization of scan behavior
 - Generated remediation scripts for all automated fixes
 - Generated reports in HTML, Markdown, JSON, and Text formats
 

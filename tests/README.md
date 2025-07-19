@@ -14,6 +14,9 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m pytest
 
 # Run specific test file
 PYTHONPATH=/home/ec2-user/aws-sec python -m pytest tests/test_s3_scanner.py
+PYTHONPATH=/home/ec2-user/aws-sec python -m pytest tests/test_ec2_scanner.py
+PYTHONPATH=/home/ec2-user/aws-sec python -m pytest tests/test_vpc_scanner.py
+PYTHONPATH=/home/ec2-user/aws-sec python -m pytest tests/test_config.py
 
 # Run with verbose output
 PYTHONPATH=/home/ec2-user/aws-sec python -m pytest -v
@@ -33,6 +36,8 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m pytest --cov=src --cov-report=html
 
 ### Current Test Coverage
 
+**Total Tests: 62 unit tests**
+
 - **S3 Scanner Tests** (`test_s3_scanner.py`)
   - 23 comprehensive unit tests
   - 85% code coverage
@@ -45,6 +50,39 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m pytest --cov=src --cov-report=html
     - Bucket policies
     - ACLs
     - Object Lock
+
+- **EC2 Scanner Tests** (`test_ec2_scanner.py`)
+  - 8 unit tests
+  - 76% code coverage
+  - Tests security checks including:
+    - Instance metadata service v2 (IMDSv2)
+    - Security group rules
+    - EBS volume encryption
+    - Public IP assignments
+    - IAM instance profiles
+
+- **VPC Scanner Tests** (`test_vpc_scanner.py`)
+  - 13 unit tests
+  - 77% code coverage
+  - Tests security checks including:
+    - VPC Flow Logs
+    - Internet Gateways
+    - NAT Gateway placement
+    - VPC Peering connections
+    - VPC Endpoints
+    - Route tables
+    - DHCP options
+
+- **Configuration Tests** (`test_config.py`)
+  - 18 unit tests
+  - 91% code coverage
+  - Tests configuration features including:
+    - YAML configuration loading
+    - Service enable/disable
+    - Risk scoring weights
+    - Severity overrides
+    - Finding suppression
+    - CLI option merging
 
 ### Test Conventions
 
