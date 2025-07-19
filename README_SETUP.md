@@ -40,7 +40,7 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --output-format html --
 # Generate markdown report
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --output-format markdown --output-file report.md
 
-# With remediation scripts (has minor issues)
+# With remediation scripts
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --generate-remediation
 ```
 
@@ -67,15 +67,15 @@ This project requires Python 3.9 or higher. The virtual environment uses Python 
 
 1. The package has relative import issues that prevent the installed `aws-security-tool` command from working properly
 2. The tool needs to be run with PYTHONPATH set as shown above
-3. Remediation script generation has a minor variable scoping issue (being fixed)
 
 ### Recent Successful Scan
 
 The tool has been successfully tested on AWS account 028358929215 on July 19, 2025:
-- Successfully scanned IAM configurations
-- Found 19 security issues (1 CRITICAL, 14 HIGH, 3 MEDIUM, 1 LOW)
-- Generated both HTML and Markdown reports
-- Fixed several bugs during initial run (base64 decoding, risk score calculation)
+- Successfully scanned IAM and S3 configurations
+- Combined scan found 129 security issues across both services
+- S3-only scan found 110 findings (4 HIGH, 58 MEDIUM, 48 LOW)
+- Generated remediation scripts for all automated fixes
+- Generated reports in HTML, Markdown, JSON, and Text formats
 
 ### Deactivation
 

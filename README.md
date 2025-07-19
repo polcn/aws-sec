@@ -109,8 +109,22 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli list-services
 ## Documentation
 
 - [Setup Guide](./README_SETUP.md) - Virtual environment setup and troubleshooting
+- [Changelog](./CHANGELOG.md) - Version history and updates
+- [TODO List](./TODO.md) - Roadmap and planned features
+- [AWS Security Audit Program](./AWS_SECURITY_AUDIT_PROGRAM.md) - Comprehensive audit methodology
 - [AWS Security Tool PRD](./aws-security-tool-prd.md) - Product requirements document
 - Additional docs in the [docs](./docs) directory
+
+## Contributing
+
+We welcome contributions! Please check our [TODO list](./TODO.md) for areas where you can help. Some ways to contribute:
+
+- Add new security scanners for AWS services
+- Improve existing scanners with additional checks
+- Add remediation scripts for more finding types
+- Enhance reporting capabilities
+- Write tests and improve code coverage
+- Update documentation
 
 ## License
 
