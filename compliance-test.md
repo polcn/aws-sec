@@ -1,0 +1,391 @@
+# AWS Security Analysis Report
+
+**Generated:** 2025-07-19 20:19:17 UTC
+**Account ID:** 028358929215
+**Regions:** 
+**Services:** iam
+
+## Executive Summary
+
+- **Total Findings:** 19
+- **Critical:** 1
+- **High:** 14
+- **Medium:** 3
+- **Low:** 1
+- **Informational:** 0
+- **Resources Scanned:** 19
+- **Scan Duration:** 4 seconds
+
+## Attack Surface Analysis
+
+- **Total Attack Vectors:** 19
+- **Critical Exposures:** 1
+- **Categories Affected:** 1
+- **Services Affected:** 1
+
+### Top Security Risks
+
+1. **Root Account Recently Used** (Risk Score: 100)
+   - Resource: `root`
+   - Impact: Root account usage poses significant security risks as it has unrestricted access to all AWS services.
+
+2. **User with Administrative Privileges** (Risk Score: 80)
+   - Resource: `Icculus373`
+   - Impact: Administrative access should be limited to prevent unauthorized actions.
+
+3. **Policy with Wildcard Actions** (Risk Score: 80)
+   - Resource: `Role:cdk-hnb659fds-deploy-role-028358929215-us-east-1/default`
+   - Impact: Wildcard actions grant excessive permissions.
+
+4. **Policy with Wildcard Actions** (Risk Score: 80)
+   - Resource: `Role:cdk-hnb659fds-deploy-role-028358929215-us-east-1/default`
+   - Impact: Wildcard actions grant excessive permissions.
+
+5. **Policy with Wildcard Actions** (Risk Score: 80)
+   - Resource: `Role:cdk-hnb659fds-deploy-role-028358929215-us-east-1/default`
+   - Impact: Wildcard actions grant excessive permissions.
+
+## Quick Wins
+
+These findings have automated remediation available and should be addressed first:
+
+- **Unused IAM User** (MEDIUM)
+  - Resource: `ses-smtp-user.20250716-211912`
+  - Risk Score: 60
+- **Weak Password Length Requirement** (MEDIUM)
+  - Resource: `account-password-policy`
+  - Risk Score: 60
+
+## Detailed Findings
+
+### CRITICAL Severity (1 findings)
+
+#### Root Account Recently Used
+
+- **Resource Type:** AWS::IAM::RootAccount
+- **Resource ID:** `root`
+- **Region:** global
+- **Risk Score:** 100
+
+**Description:** The root account has been used within the last 90 days.
+
+**Impact:** Root account usage poses significant security risks as it has unrestricted access to all AWS services.
+
+**Recommendation:** Enable MFA on root account, create individual IAM users for daily tasks, and avoid using root account.
+
+**Compliance Frameworks:** NIST, CIS
+
+---
+
+### HIGH Severity (14 findings)
+
+#### User with Administrative Privileges
+
+- **Resource Type:** AWS::IAM::User
+- **Resource ID:** `Icculus373`
+- **Region:** global
+- **Risk Score:** 80
+
+**Description:** User 'Icculus373' has 'AdministratorAccess' policy attached.
+
+**Impact:** Administrative access should be limited to prevent unauthorized actions.
+
+**Recommendation:** Apply principle of least privilege and use role-based access.
+
+**Compliance Frameworks:** NIST
+
+---
+
+#### Policy with Wildcard Actions
+
+- **Resource Type:** AWS::IAM::Policy
+- **Resource ID:** `Role:cdk-hnb659fds-deploy-role-028358929215-us-east-1/default`
+- **Region:** global
+- **Risk Score:** 80
+
+**Description:** Inline policy 'default' contains wildcard actions.
+
+**Impact:** Wildcard actions grant excessive permissions.
+
+**Recommendation:** Use specific actions instead of wildcards.
+
+**Compliance Frameworks:** NIST
+
+---
+
+#### Policy with Wildcard Actions
+
+- **Resource Type:** AWS::IAM::Policy
+- **Resource ID:** `Role:cdk-hnb659fds-deploy-role-028358929215-us-east-1/default`
+- **Region:** global
+- **Risk Score:** 80
+
+**Description:** Inline policy 'default' contains wildcard actions.
+
+**Impact:** Wildcard actions grant excessive permissions.
+
+**Recommendation:** Use specific actions instead of wildcards.
+
+**Compliance Frameworks:** NIST
+
+---
+
+#### Policy with Wildcard Actions
+
+- **Resource Type:** AWS::IAM::Policy
+- **Resource ID:** `Role:cdk-hnb659fds-deploy-role-028358929215-us-east-1/default`
+- **Region:** global
+- **Risk Score:** 80
+
+**Description:** Inline policy 'default' contains wildcard actions.
+
+**Impact:** Wildcard actions grant excessive permissions.
+
+**Recommendation:** Use specific actions instead of wildcards.
+
+**Compliance Frameworks:** NIST
+
+---
+
+#### Policy with Wildcard Actions
+
+- **Resource Type:** AWS::IAM::Policy
+- **Resource ID:** `Role:cdk-hnb659fds-file-publishing-role-028358929215-us-east-1/cdk-hnb659fds-file-publishing-role-default-policy-028358929215-us-east-1`
+- **Region:** global
+- **Risk Score:** 80
+
+**Description:** Inline policy 'cdk-hnb659fds-file-publishing-role-default-policy-028358929215-us-east-1' contains wildcard actions.
+
+**Impact:** Wildcard actions grant excessive permissions.
+
+**Recommendation:** Use specific actions instead of wildcards.
+
+**Compliance Frameworks:** NIST
+
+---
+
+#### Policy with Wildcard Actions
+
+- **Resource Type:** AWS::IAM::Policy
+- **Resource ID:** `Role:cdk-hnb659fds-file-publishing-role-028358929215-us-east-1/cdk-hnb659fds-file-publishing-role-default-policy-028358929215-us-east-1`
+- **Region:** global
+- **Risk Score:** 80
+
+**Description:** Inline policy 'cdk-hnb659fds-file-publishing-role-default-policy-028358929215-us-east-1' contains wildcard actions.
+
+**Impact:** Wildcard actions grant excessive permissions.
+
+**Recommendation:** Use specific actions instead of wildcards.
+
+**Compliance Frameworks:** NIST
+
+---
+
+#### Policy with Wildcard Actions
+
+- **Resource Type:** AWS::IAM::Policy
+- **Resource ID:** `Role:SapAnalyzer4Stack-AnalyzeFunctionServiceRole2A2C257-SmNqyFG4V3Aa/AnalyzeFunctionServiceRoleDefaultPolicyC2F006BE`
+- **Region:** global
+- **Risk Score:** 80
+
+**Description:** Inline policy 'AnalyzeFunctionServiceRoleDefaultPolicyC2F006BE' contains wildcard actions.
+
+**Impact:** Wildcard actions grant excessive permissions.
+
+**Recommendation:** Use specific actions instead of wildcards.
+
+**Compliance Frameworks:** NIST
+
+---
+
+#### Policy with Wildcard Actions
+
+- **Resource Type:** AWS::IAM::Policy
+- **Resource ID:** `Role:SapAnalyzer4Stack-CustomCDKBucketDeployment8693BB64-Yb68O7HgOaxH/CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF`
+- **Region:** global
+- **Risk Score:** 80
+
+**Description:** Inline policy 'CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF' contains wildcard actions.
+
+**Impact:** Wildcard actions grant excessive permissions.
+
+**Recommendation:** Use specific actions instead of wildcards.
+
+**Compliance Frameworks:** NIST
+
+---
+
+#### Policy with Wildcard Actions
+
+- **Resource Type:** AWS::IAM::Policy
+- **Resource ID:** `Role:SapAnalyzer4Stack-CustomCDKBucketDeployment8693BB64-Yb68O7HgOaxH/CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF`
+- **Region:** global
+- **Risk Score:** 80
+
+**Description:** Inline policy 'CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF' contains wildcard actions.
+
+**Impact:** Wildcard actions grant excessive permissions.
+
+**Recommendation:** Use specific actions instead of wildcards.
+
+**Compliance Frameworks:** NIST
+
+---
+
+#### Policy with Wildcard Actions
+
+- **Resource Type:** AWS::IAM::Policy
+- **Resource ID:** `Role:SapAnalyzer4Stack-FilesFunctionServiceRoleAA8EECF9-PuZKkyRpXNyf/FilesFunctionServiceRoleDefaultPolicy5CB56C2C`
+- **Region:** global
+- **Risk Score:** 80
+
+**Description:** Inline policy 'FilesFunctionServiceRoleDefaultPolicy5CB56C2C' contains wildcard actions.
+
+**Impact:** Wildcard actions grant excessive permissions.
+
+**Recommendation:** Use specific actions instead of wildcards.
+
+**Compliance Frameworks:** NIST
+
+---
+
+*... and 4 more HIGH findings*
+
+### MEDIUM Severity (3 findings)
+
+#### Unused IAM User
+
+- **Resource Type:** AWS::IAM::User
+- **Resource ID:** `ses-smtp-user.20250716-211912`
+- **Region:** global
+- **Risk Score:** 60
+
+**Description:** IAM user 'ses-smtp-user.20250716-211912' has never been used but has active credentials.
+
+**Impact:** Unused accounts with active credentials increase the attack surface.
+
+**Recommendation:** Remove unused IAM users or deactivate their credentials.
+
+**Compliance Frameworks:** NIST
+
+✅ **Automated remediation available**
+
+---
+
+#### Weak Password Length Requirement
+
+- **Resource Type:** AWS::IAM::PasswordPolicy
+- **Resource ID:** `account-password-policy`
+- **Region:** global
+- **Risk Score:** 60
+
+**Description:** Password minimum length is 8 characters.
+
+**Impact:** Short passwords are easier to crack.
+
+**Recommendation:** Set minimum password length to at least 14 characters.
+
+**Compliance Frameworks:** NIST, CIS
+
+✅ **Automated remediation available**
+
+---
+
+#### User with Both Console and Programmatic Access
+
+- **Resource Type:** AWS::IAM::User
+- **Resource ID:** `Icculus373`
+- **Region:** global
+- **Risk Score:** 60
+
+**Description:** User 'Icculus373' has both console access and active access keys.
+
+**Impact:** Users should typically have either console or programmatic access, not both.
+
+**Recommendation:** Separate human users (console) from service accounts (programmatic).
+
+**Compliance Frameworks:** NIST
+
+---
+
+### LOW Severity (1 findings)
+
+#### Insufficient Password Reuse Prevention
+
+- **Resource Type:** AWS::IAM::PasswordPolicy
+- **Resource ID:** `account-password-policy`
+- **Region:** global
+- **Risk Score:** 40
+
+**Description:** Password reuse prevention is set to 0 passwords.
+
+**Impact:** Allowing password reuse increases the risk of compromised credentials.
+
+**Recommendation:** Prevent reuse of at least the last 5 passwords.
+
+**Compliance Frameworks:** NIST
+
+✅ **Automated remediation available**
+
+---
+
+## Compliance Framework Summary
+
+| Framework | Compliance % | Risk Level | Findings | Weighted Impact |
+|-----------|--------------|------------|----------|----------------|
+| CIS | 98.5% | Low | 2 | 1.5 |
+| NIST | 86.1% | Medium | 19 | 13.9 |
+| OWASP | 100.0% | Low | 0 | 0.0 |
+| SOX | 100.0% | Low | 0 | 0.0 |
+
+### CIS Details
+- **Compliance Score:** 98.5%
+- **Risk Level:** Low
+- **Total Findings:** 2
+- **Estimated Checks:** 100
+- **Estimated Passes:** 98
+- **Severity Breakdown:**
+  - CRITICAL: 1
+  - MEDIUM: 1
+
+### NIST Details
+- **Compliance Score:** 86.1%
+- **Risk Level:** Medium
+- **Total Findings:** 19
+- **Estimated Checks:** 100
+- **Estimated Passes:** 81
+- **Severity Breakdown:**
+  - CRITICAL: 1
+  - MEDIUM: 3
+  - HIGH: 14
+  - LOW: 1
+
+## Remediation Priority Matrix
+
+### Critical Priority
+- **Risk Score Range:** 90-100
+- **Total Findings:** 1
+- **Automated Remediation:** 0
+- **Manual Remediation:** 1
+- **Estimated Effort:** Low (< 1 day)
+
+### High Priority
+- **Risk Score Range:** 70-89
+- **Total Findings:** 14
+- **Automated Remediation:** 0
+- **Manual Remediation:** 14
+- **Estimated Effort:** Medium (2-5 days)
+
+### Medium Priority
+- **Risk Score Range:** 50-69
+- **Total Findings:** 3
+- **Automated Remediation:** 2
+- **Manual Remediation:** 1
+- **Estimated Effort:** Low (< 1 day)
+
+### Low Priority
+- **Risk Score Range:** 30-49
+- **Total Findings:** 1
+- **Automated Remediation:** 1
+- **Manual Remediation:** 0
+- **Estimated Effort:** Low (< 1 day)

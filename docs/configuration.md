@@ -95,7 +95,7 @@ Control report format and content:
 
 ```yaml
 output:
-  format: markdown  # Options: markdown, html, json, text
+  format: markdown  # Options: markdown, html, json, text, csv
   file: security-report.md
   include_passed_checks: false
   suppress_findings:

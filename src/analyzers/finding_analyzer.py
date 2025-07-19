@@ -42,6 +42,89 @@ class FindingAnalyzer:
         
         return dict(compliance_summary)
     
+    def get_compliance_percentage_scores(self) -> Dict[str, Dict[str, Any]]:
+        """Calculate compliance percentage scores for each framework
+        
+        Returns a dictionary with compliance scores based on severity-weighted findings.
+        Higher severity findings have more impact on reducing compliance score.
+        """
+        # Severity weights (how much each severity reduces compliance)
+        severity_weights = {
+            Severity.CRITICAL: 1.0,    # 100% impact
+            Severity.HIGH: 0.8,        # 80% impact  
+            Severity.MEDIUM: 0.5,      # 50% impact
+            Severity.LOW: 0.2,         # 20% impact
+            Severity.INFO: 0.1         # 10% impact
+        }
+        
+        # Group findings by framework
+        framework_findings = defaultdict(list)
+        for finding in self.findings:
+            for framework in finding.compliance_frameworks:
+                framework_findings[framework.value].append(finding)
+        
+        # Calculate scores for each framework
+        compliance_scores = {}
+        
+        for framework, findings in framework_findings.items():
+            # Calculate weighted violations
+            total_weighted_violations = 0
+            severity_counts = defaultdict(int)
+            
+            for finding in findings:
+                weight = severity_weights.get(finding.severity, 0.1)
+                total_weighted_violations += weight
+                severity_counts[finding.severity.value] += 1
+            
+            # Assume baseline of 100 checks per framework (configurable)
+            baseline_checks = 100
+            
+            # Calculate compliance percentage
+            # Each violation reduces compliance based on its weight
+            compliance_reduction = (total_weighted_violations / baseline_checks) * 100
+            compliance_percentage = max(0, 100 - compliance_reduction)
+            
+            # Calculate pass/fail ratio
+            total_findings = len(findings)
+            estimated_passes = baseline_checks - total_findings
+            
+            compliance_scores[framework] = {
+                'compliance_percentage': round(compliance_percentage, 1),
+                'total_findings': total_findings,
+                'weighted_violations': round(total_weighted_violations, 2),
+                'severity_breakdown': dict(severity_counts),
+                'estimated_checks': baseline_checks,
+                'estimated_passes': max(0, estimated_passes),
+                'risk_level': self._get_compliance_risk_level(compliance_percentage)
+            }
+        
+        # Add frameworks with no findings (100% compliant)
+        all_frameworks = ['NIST', 'CIS', 'SOX', 'OWASP']
+        for framework in all_frameworks:
+            if framework not in compliance_scores:
+                compliance_scores[framework] = {
+                    'compliance_percentage': 100.0,
+                    'total_findings': 0,
+                    'weighted_violations': 0.0,
+                    'severity_breakdown': {},
+                    'estimated_checks': 100,
+                    'estimated_passes': 100,
+                    'risk_level': 'Low'
+                }
+        
+        return compliance_scores
+    
+    def _get_compliance_risk_level(self, percentage: float) -> str:
+        """Determine risk level based on compliance percentage"""
+        if percentage >= 95:
+            return 'Low'
+        elif percentage >= 80:
+            return 'Medium'
+        elif percentage >= 60:
+            return 'High'
+        else:
+            return 'Critical'
+    
     def get_remediation_priority_matrix(self) -> List[Dict[str, Any]]:
         """Create a priority matrix for remediation efforts"""
         matrix = []

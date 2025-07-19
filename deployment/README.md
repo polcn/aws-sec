@@ -57,6 +57,9 @@ aws-security-tool scan --output-format markdown --output-file report.md
 
 # JSON report (for programmatic access)
 aws-security-tool scan --output-format json --output-file report.json
+
+# CSV report (for spreadsheet analysis)
+aws-security-tool scan --output-format csv --output-file report.csv
 ```
 
 ### Generate Remediation Scripts

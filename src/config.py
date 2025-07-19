@@ -48,7 +48,7 @@ class RiskScoringConfig(BaseModel):
 class OutputConfig(BaseModel):
     """Configuration for output formatting and reporting."""
     
-    format: str = Field(default="markdown", pattern="^(markdown|html|json|text)$")
+    format: str = Field(default="markdown", pattern="^(markdown|html|json|text|csv)$")
     file: Optional[str] = None
     include_passed_checks: bool = False
     suppress_findings: Optional[List[str]] = Field(default_factory=list)

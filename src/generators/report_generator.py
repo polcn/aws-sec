@@ -2,6 +2,8 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 from jinja2 import Template
 import json
+import csv
+import io
 import markdown
 from ..models import Finding, ScanResult, Severity
 from ..analyzers import FindingAnalyzer
@@ -31,6 +33,7 @@ class ReportGenerator:
             'priority_matrix': self.analyzer.get_remediation_priority_matrix(),
             'quick_wins': self.analyzer.get_quick_wins()[:10],
             'compliance_summary': self.analyzer.get_compliance_summary(),
+            'compliance_scores': self.analyzer.get_compliance_percentage_scores(),
             'attack_surface': self.analyzer.get_attack_surface_analysis(),
             'severity_colors': {
                 'CRITICAL': '#dc3545',
@@ -144,19 +147,35 @@ class ReportGenerator:
                     lines.append(f"*... and {len(severity_findings) - 10} more {severity.value} findings*")
                     lines.append("")
         
-        # Compliance Summary
-        compliance_summary = self.analyzer.get_compliance_summary()
-        if compliance_summary:
+        # Compliance Summary with Percentage Scores
+        compliance_scores = self.analyzer.get_compliance_percentage_scores()
+        if compliance_scores:
             lines.append("## Compliance Framework Summary")
             lines.append("")
             
-            for framework, data in compliance_summary.items():
-                lines.append(f"### {framework}")
-                lines.append(f"- Total Findings: {data['total']}")
-                for severity, count in data['by_severity'].items():
-                    if count > 0:
-                        lines.append(f"- {severity}: {count}")
-                lines.append("")
+            # Create a simple table for compliance scores
+            lines.append("| Framework | Compliance % | Risk Level | Findings | Weighted Impact |")
+            lines.append("|-----------|--------------|------------|----------|----------------|")
+            
+            for framework, score_data in sorted(compliance_scores.items()):
+                lines.append(f"| {framework} | {score_data['compliance_percentage']}% | {score_data['risk_level']} | {score_data['total_findings']} | {score_data['weighted_violations']} |")
+            
+            lines.append("")
+            
+            # Detailed breakdown for each framework with findings
+            for framework, score_data in sorted(compliance_scores.items()):
+                if score_data['total_findings'] > 0:
+                    lines.append(f"### {framework} Details")
+                    lines.append(f"- **Compliance Score:** {score_data['compliance_percentage']}%")
+                    lines.append(f"- **Risk Level:** {score_data['risk_level']}")
+                    lines.append(f"- **Total Findings:** {score_data['total_findings']}")
+                    lines.append(f"- **Estimated Checks:** {score_data['estimated_checks']}")
+                    lines.append(f"- **Estimated Passes:** {score_data['estimated_passes']}")
+                    if score_data['severity_breakdown']:
+                        lines.append("- **Severity Breakdown:**")
+                        for severity, count in score_data['severity_breakdown'].items():
+                            lines.append(f"  - {severity}: {count}")
+                    lines.append("")
         
         # Remediation Priority Matrix
         lines.append("## Remediation Priority Matrix")
@@ -216,6 +235,7 @@ class ReportGenerator:
                 'attack_surface': self.analyzer.get_attack_surface_analysis(),
                 'remediation_priority_matrix': self.analyzer.get_remediation_priority_matrix(),
                 'compliance_summary': self.analyzer.get_compliance_summary(),
+                'compliance_scores': self.analyzer.get_compliance_percentage_scores(),
                 'risk_baseline': self.analyzer.get_risk_trend_baseline()
             }
         }
@@ -276,6 +296,88 @@ class ReportGenerator:
         lines.append("=" * width)
         
         return '\n'.join(lines)
+    
+    def generate_csv_report(self) -> str:
+        """Generate a CSV report"""
+        output = io.StringIO()
+        
+        # Define CSV headers
+        headers = [
+            'Finding ID',
+            'Severity',
+            'Risk Score',
+            'Category',
+            'Service',
+            'Resource Type',
+            'Resource ID',
+            'Region',
+            'Title',
+            'Description',
+            'Impact',
+            'Recommendation',
+            'Compliance Frameworks',
+            'Automated Remediation',
+            'Detected At'
+        ]
+        
+        writer = csv.writer(output)
+        writer.writerow(headers)
+        
+        # Write findings data
+        for finding in self.findings:
+            row = [
+                finding.finding_id,
+                finding.severity.value,
+                finding.risk_score,
+                finding.category.value,
+                finding.resource_type.split(':')[0] if ':' in finding.resource_type else finding.resource_type,
+                finding.resource_type,
+                finding.resource_id,
+                finding.region,
+                finding.title,
+                finding.description,
+                finding.impact,
+                finding.recommendation,
+                ', '.join([cf.value for cf in finding.compliance_frameworks]),
+                'Yes' if finding.automated_remediation_available else 'No',
+                finding.detected_at.strftime('%Y-%m-%d %H:%M:%S UTC')
+            ]
+            writer.writerow(row)
+        
+        # Add summary section
+        writer.writerow([])  # Empty row
+        writer.writerow(['Summary Statistics'])
+        writer.writerow(['Metric', 'Value'])
+        
+        stats = self.scan_result.get_statistics()
+        writer.writerow(['Total Findings', stats['total_findings']])
+        writer.writerow(['Critical', stats['severity_distribution'][Severity.CRITICAL]])
+        writer.writerow(['High', stats['severity_distribution'][Severity.HIGH]])
+        writer.writerow(['Medium', stats['severity_distribution'][Severity.MEDIUM]])
+        writer.writerow(['Low', stats['severity_distribution'][Severity.LOW]])
+        writer.writerow(['Informational', stats['severity_distribution'][Severity.INFO]])
+        writer.writerow(['Resources Scanned', self.scan_result.total_resources_scanned])
+        writer.writerow(['Scan Duration', f"{stats['scan_duration']:.1f} seconds" if stats['scan_duration'] else 'N/A'])
+        writer.writerow(['Account ID', self.scan_result.account_id])
+        writer.writerow(['Regions', ', '.join(self.scan_result.regions)])
+        writer.writerow(['Services', ', '.join(self.scan_result.services_scanned)])
+        
+        # Add compliance scores section
+        writer.writerow([])  # Empty row
+        writer.writerow(['Compliance Scores'])
+        writer.writerow(['Framework', 'Compliance %', 'Risk Level', 'Total Findings', 'Weighted Violations'])
+        
+        compliance_scores = self.analyzer.get_compliance_percentage_scores()
+        for framework, score_data in sorted(compliance_scores.items()):
+            writer.writerow([
+                framework,
+                f"{score_data['compliance_percentage']}%",
+                score_data['risk_level'],
+                score_data['total_findings'],
+                score_data['weighted_violations']
+            ])
+        
+        return output.getvalue()
     
     def _group_findings_by_severity(self) -> Dict[str, List[Finding]]:
         """Group findings by severity level"""
@@ -584,12 +686,33 @@ class ReportGenerator:
         {% endfor %}
         
         <h2>Compliance Summary</h2>
-        <div class="chart-container">
-            {% for framework, data in compliance_summary.items() %}
-            <h3>{{ framework }}</h3>
-            <p>Total Findings: {{ data.total }}</p>
-            <div class="progress-bar">
-                <div class="progress-fill" style="width: {{ (data.total / statistics.total_findings * 100)|round }}%;"></div>
+        <div class="summary-grid">
+            {% for framework, score_data in compliance_scores.items() %}
+            <div class="summary-card">
+                <h3>{{ framework }}</h3>
+                <div style="font-size: 2em; font-weight: bold; color: 
+                    {% if score_data.compliance_percentage >= 95 %}#28a745
+                    {% elif score_data.compliance_percentage >= 80 %}#ffc107
+                    {% elif score_data.compliance_percentage >= 60 %}#fd7e14
+                    {% else %}#dc3545{% endif %};">
+                    {{ score_data.compliance_percentage }}%
+                </div>
+                <p><strong>Risk Level:</strong> {{ score_data.risk_level }}</p>
+                <p><strong>Findings:</strong> {{ score_data.total_findings }}</p>
+                <div class="progress-bar" style="margin-top: 10px;">
+                    <div class="progress-fill" style="width: {{ score_data.compliance_percentage }}%; 
+                        background-color: {% if score_data.compliance_percentage >= 95 %}#28a745
+                        {% elif score_data.compliance_percentage >= 80 %}#ffc107
+                        {% elif score_data.compliance_percentage >= 60 %}#fd7e14
+                        {% else %}#dc3545{% endif %};"></div>
+                </div>
+                {% if score_data.severity_breakdown %}
+                <div style="font-size: 0.8em; margin-top: 10px;">
+                    {% for severity, count in score_data.severity_breakdown.items() %}
+                    <span style="margin-right: 10px;">{{ severity }}: {{ count }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
             {% endfor %}
         </div>

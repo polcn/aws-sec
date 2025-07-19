@@ -5,6 +5,29 @@ All notable changes to the AWS Security Analysis Tool will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2025-07-19
+
+### Added
+- **CSV Export Format**: Export security findings to CSV for spreadsheet analysis
+  - Full finding details with all metadata
+  - Summary statistics section
+  - Proper handling of special characters and newlines
+  - Compatible with Excel, Google Sheets, and other spreadsheet tools
+- **Compliance Percentage Scoring**: Calculate compliance scores for each framework
+  - Weighted scoring based on finding severity
+  - Risk level assessment (Low/Medium/High/Critical)
+  - Estimated passed checks calculation
+  - Severity breakdown per framework
+  - Visual compliance indicators in HTML reports
+  - Compliance data in all report formats (HTML, Markdown, JSON, CSV)
+- **Unit Tests**: Added comprehensive tests for report generator and compliance scoring
+
+### Changed
+- Updated configuration to support CSV format option
+- Enhanced CLI to include CSV in output format choices
+- Report generators now include compliance percentage scores
+- HTML reports show visual compliance indicators with color coding
+
 ## [1.5.0] - 2025-07-19
 
 ### Added

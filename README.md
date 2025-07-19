@@ -14,8 +14,9 @@ A comprehensive, open-source AWS security analysis tool that performs automated 
 - **VPC Security Analysis**: Flow logs, endpoints, peering, NAT gateways, route tables, and network configuration
 - **RDS Security Analysis**: Database encryption, backups, public access, Multi-AZ, deletion protection, and parameter security
 - **Architecture Diagram Generation**: Auto-generate visual representation of AWS infrastructure
-- **Compliance Framework Mapping**: Map findings to NIST, CIS, SOX, and OWASP frameworks
-- **Multi-Format Reporting**: Generate reports in HTML, Markdown, JSON, and plain text formats
+- **Compliance Framework Mapping**: Map findings to NIST, CIS, SOX, and OWASP frameworks with percentage scoring
+- **Multi-Format Reporting**: Generate reports in HTML, Markdown, JSON, CSV, and plain text formats
+- **Compliance Percentage Scoring**: Calculate weighted compliance scores for each framework with risk assessments
 
 ## Latest Scan Results
 
@@ -89,6 +90,7 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --generate-remediation
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --output-format html --output-file report.html
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --output-format markdown --output-file report.md
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --output-format json --output-file report.json
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --output-format csv --output-file report.csv
 
 # List available services
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli list-services

@@ -41,7 +41,7 @@ def cli():
 @click.option('--config', '-c', type=click.Path(exists=True), help='Configuration file path')
 @click.option('--services', '-s', help='Comma-separated list of services to scan (overrides config)')
 @click.option('--regions', '-r', help='Comma-separated list of regions to scan (overrides config)')
-@click.option('--output-format', '-f', type=click.Choice(['html', 'markdown', 'json', 'text']), help='Output format for the report')
+@click.option('--output-format', '-f', type=click.Choice(['html', 'markdown', 'json', 'text', 'csv']), help='Output format for the report')
 @click.option('--output-file', '-o', help='Output file path')
 @click.option('--generate-remediation', '-g', is_flag=True, help='Generate remediation scripts')
 @click.option('--remediation-dir', default='remediation-scripts', help='Directory to save remediation scripts')
@@ -223,6 +223,8 @@ def scan(config, services, regions, output_format, output_file, generate_remedia
             report_content = report_generator.generate_markdown_report()
         elif output_format == 'json':
             report_content = report_generator.generate_json_report()
+        elif output_format == 'csv':
+            report_content = report_generator.generate_csv_report()
         else:  # text
             report_content = report_generator.generate_text_report()
         
