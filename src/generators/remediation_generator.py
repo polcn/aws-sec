@@ -81,8 +81,8 @@ class RemediationGenerator:
         DRY_RUN = True
         
         def log_action(action, resource, dry_run=True):
-            prefix = "[DRY RUN] " if dry_run else "[APPLIED] "
-            print(f"{prefix}{action}: {resource}")
+            action_prefix = "[DRY RUN] " if dry_run else "[APPLIED] "
+            print(f"{action_prefix}{action}: {resource}")
         
         def confirm_action(prompt):
             if DRY_RUN:

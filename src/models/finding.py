@@ -72,6 +72,12 @@ class Finding(BaseModel):
         return min(score, 100)
     
     def __init__(self, **data):
-        super().__init__(**data)
-        if not self.risk_score:
+        # Calculate risk score if not provided
+        if 'risk_score' not in data:
+            # Create a temporary instance to calculate risk score
+            temp_data = data.copy()
+            temp_data['risk_score'] = 0  # Temporary value
+            super().__init__(**temp_data)
             self.risk_score = self.calculate_risk_score()
+        else:
+            super().__init__(**data)

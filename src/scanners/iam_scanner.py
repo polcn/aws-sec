@@ -1,10 +1,17 @@
 import json
+import base64
+import csv
+import io
+import time
+import logging
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional
 import boto3
 from botocore.exceptions import ClientError
 from .base import BaseScanner
 from ..models import Finding, Severity, Category, ComplianceFramework
+
+logger = logging.getLogger(__name__)
 
 
 class IAMScanner(BaseScanner):
@@ -676,7 +683,22 @@ class IAMScanner(BaseScanner):
         
         # Get the report
         response = iam_client.get_credential_report()
-        report_content = base64.b64decode(response['Content']).decode('utf-8')
+        # Handle both string and bytes response
+        content = response['Content']
+        try:
+            # AWS returns base64 encoded content
+            if isinstance(content, bytes):
+                # If bytes, decode directly
+                report_content = content.decode('utf-8')
+            else:
+                # If string, it's base64 encoded
+                report_content = base64.b64decode(content).decode('utf-8')
+        except Exception as e:
+            logger.error(f"Error decoding credential report: {e}")
+            logger.error(f"Content type: {type(content)}, length: {len(content)}")
+            if isinstance(content, str):
+                logger.error(f"First 100 chars: {content[:100]}")
+            raise
         
         # Parse CSV
         report_lines = report_content.strip().split('\n')
