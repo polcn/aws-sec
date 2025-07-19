@@ -20,21 +20,28 @@ source /home/ec2-user/aws-sec/activate.sh
 
 ### Running the Tool
 
-Due to import structure issues in the codebase, the tool cannot be run directly via the installed command. Instead, use one of these methods:
+Due to import structure issues in the codebase, the tool cannot be run directly via the installed command. Use this method:
 
-1. **From the src directory:**
+**Recommended Method:**
 ```bash
 cd /home/ec2-user/aws-sec
 source venv/bin/activate
-cd aws-security-tool/src
-python -m cli --help
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan
 ```
 
-2. **Using the runner script:**
+**Example Commands:**
 ```bash
-cd /home/ec2-user/aws-sec
-source venv/bin/activate
-python run_tool.py --help
+# Basic scan
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan
+
+# Generate HTML report
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --output-format html --output-file report.html
+
+# Generate markdown report
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --output-format markdown --output-file report.md
+
+# With remediation scripts (has minor issues)
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --generate-remediation
 ```
 
 ### Dependencies
@@ -59,7 +66,16 @@ This project requires Python 3.9 or higher. The virtual environment uses Python 
 ### Known Issues
 
 1. The package has relative import issues that prevent the installed `aws-security-tool` command from working properly
-2. The tool needs to be run from the source directory or using the runner script as a workaround
+2. The tool needs to be run with PYTHONPATH set as shown above
+3. Remediation script generation has a minor variable scoping issue (being fixed)
+
+### Recent Successful Scan
+
+The tool has been successfully tested on AWS account 028358929215 on July 19, 2025:
+- Successfully scanned IAM configurations
+- Found 19 security issues (1 CRITICAL, 14 HIGH, 3 MEDIUM, 1 LOW)
+- Generated both HTML and Markdown reports
+- Fixed several bugs during initial run (base64 decoding, risk score calculation)
 
 ### Deactivation
 
