@@ -43,6 +43,17 @@ class RemediationGenerator:
             "VPC Flow Logs Not Enabled": self._generate_vpc_flow_logs_script,
             "VPC Missing Recommended Endpoints": self._generate_vpc_endpoints_script,
             "NAT Gateway in Private Subnet": self._generate_nat_gateway_fix_script,
+            # RDS findings
+            "RDS Instance Not Encrypted": self._generate_rds_encryption_reminder,
+            "RDS Cluster Not Encrypted": self._generate_rds_encryption_reminder,
+            "Insufficient Backup Retention Period": self._generate_rds_backup_retention_script,
+            "Automated Backups Disabled": self._generate_rds_backup_retention_script,
+            "RDS Instance Publicly Accessible": self._generate_rds_disable_public_access_script,
+            "Multi-AZ Not Enabled": self._generate_rds_multi_az_script,
+            "Deletion Protection Not Enabled": self._generate_rds_deletion_protection_script,
+            "Auto Minor Version Upgrade Disabled": self._generate_rds_auto_upgrade_script,
+            "Performance Insights Not Enabled": self._generate_rds_performance_insights_script,
+            "IAM Database Authentication Not Enabled": self._generate_rds_iam_auth_script,
         }
         
         # Find matching remediation generator
@@ -1661,6 +1672,520 @@ class RemediationGenerator:
             script_content=script_content,
             risk_level="high",
             estimated_impact="Requires creating new NAT Gateway and updating routes - plan for brief connectivity disruption"
+        )
+    
+    def _generate_rds_encryption_reminder(self, finding: Finding) -> RemediationScript:
+        """Generate reminder script for RDS encryption (requires data migration)"""
+        resource_id = finding.resource_id
+        region = finding.region
+        
+        script_content = textwrap.dedent(f"""
+        #!/usr/bin/env python3
+        '''
+        Remediation: Enable encryption for RDS instance/cluster
+        Finding: {finding.title}
+        Resource: {resource_id}
+        
+        NOTE: Encryption cannot be enabled on existing RDS instances.
+        You must create a new encrypted instance and migrate data.
+        '''
+        
+        print("RDS ENCRYPTION REMEDIATION STEPS:")
+        print("=" * 50)
+        print()
+        print("Encryption cannot be enabled on existing RDS instances/clusters.")
+        print("You must create a new encrypted instance and migrate your data.")
+        print()
+        print("Steps to remediate:")
+        print("1. Create a snapshot of the existing database:")
+        print(f"   aws rds create-db-snapshot --db-instance-identifier {resource_id} \\\\")
+        print(f"        --db-snapshot-identifier {resource_id}-migration-snapshot")
+        print()
+        print("2. Copy the snapshot with encryption enabled:")
+        print(f"   aws rds copy-db-snapshot --source-db-snapshot-identifier {resource_id}-migration-snapshot \\\\")
+        print(f"        --target-db-snapshot-identifier {resource_id}-encrypted-snapshot \\\\")
+        print("        --kms-key-id alias/aws/rds")
+        print()
+        print("3. Restore from the encrypted snapshot:")
+        print(f"   aws rds restore-db-instance-from-db-snapshot --db-instance-identifier {resource_id}-encrypted \\\\")
+        print(f"        --db-snapshot-identifier {resource_id}-encrypted-snapshot")
+        print()
+        print("4. Update your application connection strings to use the new encrypted instance")
+        print()
+        print("5. After verifying the new instance works correctly, delete the old unencrypted instance")
+        print()
+        print("For automated migration scripts, see AWS Database Migration Service (DMS)")
+        """)
+        
+        return RemediationScript(
+            finding_id=finding.finding_id,
+            title=f"Enable encryption for {resource_id}",
+            description=f"Steps to migrate {resource_id} to an encrypted instance",
+            script_type="python",
+            script_content=script_content,
+            risk_level="high",
+            estimated_impact="Requires downtime for data migration"
+        )
+    
+    def _generate_rds_backup_retention_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to configure RDS backup retention"""
+        resource_id = finding.resource_id
+        region = finding.region
+        
+        script_content = textwrap.dedent(f"""
+        #!/usr/bin/env python3
+        '''
+        Remediation: Configure RDS backup retention
+        Finding: {finding.title}
+        Resource: {resource_id}
+        '''
+        
+        import boto3
+        from botocore.exceptions import ClientError
+        
+        def configure_backup_retention(db_identifier, region, retention_days=7):
+            '''Configure backup retention for RDS instance'''
+            rds = boto3.client('rds', region_name=region)
+            
+            try:
+                response = rds.modify_db_instance(
+                    DBInstanceIdentifier=db_identifier,
+                    BackupRetentionPeriod=retention_days,
+                    PreferredBackupWindow='03:00-04:00',  # 3-4 AM UTC
+                    ApplyImmediately=True
+                )
+                print(f"Successfully configured backup retention for {{db_identifier}}")
+                print(f"Retention period: {{retention_days}} days")
+                print(f"Backup window: 03:00-04:00 UTC")
+                return True
+            except ClientError as e:
+                print(f"Error configuring backup retention: {{e}}")
+                if e.response['Error']['Code'] == 'InvalidDBInstanceState':
+                    print("Instance may be in an invalid state. Please check AWS console.")
+                return False
+        
+        if __name__ == "__main__":
+            db_identifier = "{resource_id}"
+            region = "{region}"
+            
+            print(f"Configuring backup retention for {{db_identifier}} in {{region}}")
+            
+            # Prompt for retention period
+            retention = input("Enter backup retention period in days (recommended: 7-35): ")
+            try:
+                retention_days = int(retention)
+                if retention_days < 1 or retention_days > 35:
+                    print("Retention period must be between 1 and 35 days")
+                    exit(1)
+            except ValueError:
+                print("Invalid retention period")
+                exit(1)
+            
+            if configure_backup_retention(db_identifier, region, retention_days):
+                print("\\nBackup retention configured successfully!")
+            else:
+                print("\\nFailed to configure backup retention")
+        """)
+        
+        return RemediationScript(
+            finding_id=finding.finding_id,
+            title=f"Configure backup retention for {resource_id}",
+            description=f"Enable and configure automated backups for RDS instance",
+            script_type="python",
+            script_content=script_content,
+            risk_level="low",
+            estimated_impact="No downtime - backup configuration change only"
+        )
+    
+    def _generate_rds_disable_public_access_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to disable public access for RDS instance"""
+        resource_id = finding.resource_id
+        region = finding.region
+        
+        script_content = textwrap.dedent(f"""
+        #!/usr/bin/env python3
+        '''
+        Remediation: Disable public access for RDS instance
+        Finding: {finding.title}
+        Resource: {resource_id}
+        '''
+        
+        import boto3
+        from botocore.exceptions import ClientError
+        
+        def disable_public_access(db_identifier, region):
+            '''Disable public access for RDS instance'''
+            rds = boto3.client('rds', region_name=region)
+            
+            try:
+                response = rds.modify_db_instance(
+                    DBInstanceIdentifier=db_identifier,
+                    PubliclyAccessible=False,
+                    ApplyImmediately=True
+                )
+                print(f"Successfully disabled public access for {{db_identifier}}")
+                return True
+            except ClientError as e:
+                print(f"Error disabling public access: {{e}}")
+                return False
+        
+        if __name__ == "__main__":
+            db_identifier = "{resource_id}"
+            region = "{region}"
+            
+            print(f"Disabling public access for {{db_identifier}} in {{region}}")
+            print("\\nWARNING: This will prevent direct internet access to your database.")
+            print("Ensure you have alternative access methods configured (VPN, bastion host, etc.)")
+            
+            confirm = input("\\nProceed with disabling public access? (yes/no): ")
+            if confirm.lower() == 'yes':
+                if disable_public_access(db_identifier, region):
+                    print("\\nPublic access disabled successfully!")
+                    print("Update your application connection methods as needed.")
+                else:
+                    print("\\nFailed to disable public access")
+            else:
+                print("\\nOperation cancelled")
+        """)
+        
+        return RemediationScript(
+            finding_id=finding.finding_id,
+            title=f"Disable public access for {resource_id}",
+            description=f"Remove public accessibility from RDS instance",
+            script_type="python",
+            script_content=script_content,
+            risk_level="medium",
+            estimated_impact="May affect connectivity - ensure alternative access methods exist"
+        )
+    
+    def _generate_rds_multi_az_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to enable Multi-AZ for RDS instance"""
+        resource_id = finding.resource_id
+        region = finding.region
+        
+        script_content = textwrap.dedent(f"""
+        #!/usr/bin/env python3
+        '''
+        Remediation: Enable Multi-AZ deployment for RDS instance
+        Finding: {finding.title}
+        Resource: {resource_id}
+        '''
+        
+        import boto3
+        from botocore.exceptions import ClientError
+        
+        def enable_multi_az(db_identifier, region):
+            '''Enable Multi-AZ for RDS instance'''
+            rds = boto3.client('rds', region_name=region)
+            
+            try:
+                # First get instance details
+                response = rds.describe_db_instances(DBInstanceIdentifier=db_identifier)
+                instance = response['DBInstances'][0]
+                
+                if instance.get('ReadReplicaSourceDBInstanceIdentifier'):
+                    print("This is a read replica - Multi-AZ not applicable")
+                    return False
+                
+                print(f"Enabling Multi-AZ for {{db_identifier}}...")
+                response = rds.modify_db_instance(
+                    DBInstanceIdentifier=db_identifier,
+                    MultiAZ=True,
+                    ApplyImmediately=False  # Schedule for maintenance window
+                )
+                print(f"Successfully scheduled Multi-AZ enablement for {{db_identifier}}")
+                print("Change will be applied during the next maintenance window")
+                return True
+            except ClientError as e:
+                print(f"Error enabling Multi-AZ: {{e}}")
+                return False
+        
+        if __name__ == "__main__":
+            db_identifier = "{resource_id}"
+            region = "{region}"
+            
+            print(f"Enabling Multi-AZ deployment for {{db_identifier}} in {{region}}")
+            print("\\nNOTE: This operation will:")
+            print("- Create a standby replica in another availability zone")
+            print("- Increase costs (roughly double the instance cost)")
+            print("- Provide automatic failover capability")
+            print("- Be applied during maintenance window to minimize impact")
+            
+            confirm = input("\\nProceed with enabling Multi-AZ? (yes/no): ")
+            if confirm.lower() == 'yes':
+                if enable_multi_az(db_identifier, region):
+                    print("\\nMulti-AZ enablement scheduled successfully!")
+                else:
+                    print("\\nFailed to enable Multi-AZ")
+            else:
+                print("\\nOperation cancelled")
+        """)
+        
+        return RemediationScript(
+            finding_id=finding.finding_id,
+            title=f"Enable Multi-AZ for {resource_id}",
+            description=f"Enable Multi-AZ deployment for high availability",
+            script_type="python",
+            script_content=script_content,
+            risk_level="low",
+            estimated_impact="Brief interruption during failover testing - applied in maintenance window"
+        )
+    
+    def _generate_rds_deletion_protection_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to enable deletion protection for RDS"""
+        resource_id = finding.resource_id
+        region = finding.region
+        resource_type = finding.resource_type
+        
+        script_content = textwrap.dedent(f"""
+        #!/usr/bin/env python3
+        '''
+        Remediation: Enable deletion protection for RDS resource
+        Finding: {finding.title}
+        Resource: {resource_id}
+        '''
+        
+        import boto3
+        from botocore.exceptions import ClientError
+        
+        def enable_deletion_protection(resource_id, region, resource_type):
+            '''Enable deletion protection for RDS instance or cluster'''
+            rds = boto3.client('rds', region_name=region)
+            
+            try:
+                if resource_type == 'DBCluster':
+                    response = rds.modify_db_cluster(
+                        DBClusterIdentifier=resource_id,
+                        DeletionProtection=True,
+                        ApplyImmediately=True
+                    )
+                else:
+                    response = rds.modify_db_instance(
+                        DBInstanceIdentifier=resource_id,
+                        DeletionProtection=True,
+                        ApplyImmediately=True
+                    )
+                print(f"Successfully enabled deletion protection for {{resource_id}}")
+                return True
+            except ClientError as e:
+                print(f"Error enabling deletion protection: {{e}}")
+                return False
+        
+        if __name__ == "__main__":
+            resource_id = "{resource_id}"
+            region = "{region}"
+            resource_type = "{resource_type}"
+            
+            print(f"Enabling deletion protection for {{resource_id}} in {{region}}")
+            
+            if enable_deletion_protection(resource_id, region, resource_type):
+                print("\\nDeletion protection enabled successfully!")
+                print("This database cannot be deleted until protection is explicitly disabled.")
+            else:
+                print("\\nFailed to enable deletion protection")
+        """)
+        
+        return RemediationScript(
+            finding_id=finding.finding_id,
+            title=f"Enable deletion protection for {resource_id}",
+            description=f"Prevent accidental deletion of RDS resource",
+            script_type="python",
+            script_content=script_content,
+            risk_level="low",
+            estimated_impact="No downtime - adds safety protection only"
+        )
+    
+    def _generate_rds_auto_upgrade_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to enable auto minor version upgrade"""
+        resource_id = finding.resource_id
+        region = finding.region
+        
+        script_content = textwrap.dedent(f"""
+        #!/usr/bin/env python3
+        '''
+        Remediation: Enable auto minor version upgrade for RDS instance
+        Finding: {finding.title}
+        Resource: {resource_id}
+        '''
+        
+        import boto3
+        from botocore.exceptions import ClientError
+        
+        def enable_auto_upgrade(db_identifier, region):
+            '''Enable auto minor version upgrade for RDS instance'''
+            rds = boto3.client('rds', region_name=region)
+            
+            try:
+                response = rds.modify_db_instance(
+                    DBInstanceIdentifier=db_identifier,
+                    AutoMinorVersionUpgrade=True,
+                    ApplyImmediately=True
+                )
+                print(f"Successfully enabled auto minor version upgrade for {{db_identifier}}")
+                print("Minor version updates will be applied during maintenance windows")
+                return True
+            except ClientError as e:
+                print(f"Error enabling auto upgrade: {{e}}")
+                return False
+        
+        if __name__ == "__main__":
+            db_identifier = "{resource_id}"
+            region = "{region}"
+            
+            print(f"Enabling auto minor version upgrade for {{db_identifier}} in {{region}}")
+            print("\\nThis will automatically apply minor version patches during maintenance windows")
+            print("Minor versions typically include security patches and bug fixes")
+            
+            if enable_auto_upgrade(db_identifier, region):
+                print("\\nAuto minor version upgrade enabled successfully!")
+            else:
+                print("\\nFailed to enable auto upgrade")
+        """)
+        
+        return RemediationScript(
+            finding_id=finding.finding_id,
+            title=f"Enable auto upgrade for {resource_id}",
+            description=f"Enable automatic minor version upgrades for security patches",
+            script_type="python",
+            script_content=script_content,
+            risk_level="low",
+            estimated_impact="Updates applied during maintenance window"
+        )
+    
+    def _generate_rds_performance_insights_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to enable Performance Insights"""
+        resource_id = finding.resource_id
+        region = finding.region
+        
+        script_content = textwrap.dedent(f"""
+        #!/usr/bin/env python3
+        '''
+        Remediation: Enable Performance Insights for RDS instance
+        Finding: {finding.title}
+        Resource: {resource_id}
+        '''
+        
+        import boto3
+        from botocore.exceptions import ClientError
+        
+        def enable_performance_insights(db_identifier, region):
+            '''Enable Performance Insights for RDS instance'''
+            rds = boto3.client('rds', region_name=region)
+            
+            try:
+                response = rds.modify_db_instance(
+                    DBInstanceIdentifier=db_identifier,
+                    EnablePerformanceInsights=True,
+                    PerformanceInsightsRetentionPeriod=7,  # Free tier: 7 days
+                    ApplyImmediately=True
+                )
+                print(f"Successfully enabled Performance Insights for {{db_identifier}}")
+                print("Retention period: 7 days (free tier)")
+                return True
+            except ClientError as e:
+                print(f"Error enabling Performance Insights: {{e}}")
+                if 'not supported' in str(e):
+                    print("Performance Insights may not be supported for this instance type")
+                return False
+        
+        if __name__ == "__main__":
+            db_identifier = "{resource_id}"
+            region = "{region}"
+            
+            print(f"Enabling Performance Insights for {{db_identifier}} in {{region}}")
+            print("\\nPerformance Insights provides database performance monitoring")
+            print("Free tier includes 7 days of retention")
+            
+            if enable_performance_insights(db_identifier, region):
+                print("\\nPerformance Insights enabled successfully!")
+                print("Access via RDS console to view performance metrics")
+            else:
+                print("\\nFailed to enable Performance Insights")
+        """)
+        
+        return RemediationScript(
+            finding_id=finding.finding_id,
+            title=f"Enable Performance Insights for {resource_id}",
+            description=f"Enable database performance monitoring",
+            script_type="python",
+            script_content=script_content,
+            risk_level="low",
+            estimated_impact="No downtime - adds monitoring capability only"
+        )
+    
+    def _generate_rds_iam_auth_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to enable IAM database authentication"""
+        resource_id = finding.resource_id
+        region = finding.region
+        
+        script_content = textwrap.dedent(f"""
+        #!/usr/bin/env python3
+        '''
+        Remediation: Enable IAM database authentication for RDS instance
+        Finding: {finding.title}
+        Resource: {resource_id}
+        '''
+        
+        import boto3
+        from botocore.exceptions import ClientError
+        
+        def enable_iam_auth(db_identifier, region):
+            '''Enable IAM database authentication for RDS instance'''
+            rds = boto3.client('rds', region_name=region)
+            
+            try:
+                # Get current instance details
+                response = rds.describe_db_instances(DBInstanceIdentifier=db_identifier)
+                instance = response['DBInstances'][0]
+                engine = instance['Engine']
+                
+                supported_engines = ['mysql', 'postgres', 'mariadb']
+                if engine not in supported_engines:
+                    print(f"IAM authentication not supported for engine: {{engine}}")
+                    return False
+                
+                response = rds.modify_db_instance(
+                    DBInstanceIdentifier=db_identifier,
+                    EnableIAMDatabaseAuthentication=True,
+                    ApplyImmediately=True
+                )
+                print(f"Successfully enabled IAM authentication for {{db_identifier}}")
+                return True
+            except ClientError as e:
+                print(f"Error enabling IAM authentication: {{e}}")
+                return False
+        
+        if __name__ == "__main__":
+            db_identifier = "{resource_id}"
+            region = "{region}"
+            
+            print(f"Enabling IAM database authentication for {{db_identifier}} in {{region}}")
+            print("\\nNOTE: After enabling, you'll need to:")
+            print("1. Create database users that match IAM user/role names")
+            print("2. Grant rds_iam role to these database users")
+            print("3. Generate auth tokens using AWS CLI/SDK for connections")
+            
+            confirm = input("\\nProceed with enabling IAM authentication? (yes/no): ")
+            if confirm.lower() == 'yes':
+                if enable_iam_auth(db_identifier, region):
+                    print("\\nIAM authentication enabled successfully!")
+                    print("\\nExample MySQL setup:")
+                    print("CREATE USER 'iam_user' IDENTIFIED WITH AWSAuthenticationPlugin AS 'RDS';")
+                    print("GRANT SELECT ON mydb.* TO 'iam_user'@'%';")
+                else:
+                    print("\\nFailed to enable IAM authentication")
+            else:
+                print("\\nOperation cancelled")
+        """)
+        
+        return RemediationScript(
+            finding_id=finding.finding_id,
+            title=f"Enable IAM authentication for {resource_id}",
+            description=f"Enable IAM-based database authentication",
+            script_type="python",
+            script_content=script_content,
+            risk_level="low",
+            estimated_impact="No downtime - adds authentication option only"
         )
     
     def _load_templates(self) -> Dict[str, str]:

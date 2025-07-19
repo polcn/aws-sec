@@ -4,7 +4,7 @@ A comprehensive, open-source AWS security analysis tool that performs automated 
 
 ## Features
 
-- **Multi-Service Security Scanning**: Support for IAM, S3, EC2, and VPC with more services coming soon
+- **Multi-Service Security Scanning**: Support for IAM, S3, EC2, VPC, and RDS with more services coming soon
 - **Security Findings with Risk Prioritization**: Comprehensive scanning aligned with AWS Well-Architected Security Pillar
 - **Automated Remediation Scripts**: Generate executable Python scripts to fix identified issues
 - **Configuration File Support**: Customize scan behavior, suppress findings, and override severities
@@ -12,6 +12,7 @@ A comprehensive, open-source AWS security analysis tool that performs automated 
 - **S3 Security Analysis**: Comprehensive bucket security checks including encryption, public access, versioning, and more
 - **EC2 Security Analysis**: Instance security, security groups, EBS encryption, network ACLs, and more
 - **VPC Security Analysis**: Flow logs, endpoints, peering, NAT gateways, route tables, and network configuration
+- **RDS Security Analysis**: Database encryption, backups, public access, Multi-AZ, deletion protection, and parameter security
 - **Architecture Diagram Generation**: Auto-generate visual representation of AWS infrastructure
 - **Compliance Framework Mapping**: Map findings to NIST, CIS, SOX, and OWASP frameworks
 - **Multi-Format Reporting**: Generate reports in HTML, Markdown, JSON, and plain text formats

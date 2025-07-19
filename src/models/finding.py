@@ -24,6 +24,8 @@ class Category(str, Enum):
     DATA_PROTECTION = "DATA_PROTECTION"
     ACCESS_CONTROL = "ACCESS_CONTROL"
     COST_OPTIMIZATION = "COST_OPTIMIZATION"
+    OPERATIONAL = "OPERATIONAL"
+    PATCHING = "PATCHING"
 
 
 class ComplianceFramework(str, Enum):

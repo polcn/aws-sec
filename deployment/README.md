@@ -35,7 +35,7 @@ aws-security-tool scan
 
 ### Scan Specific Services
 ```bash
-aws-security-tool scan --services iam,s3,ec2,vpc
+aws-security-tool scan --services iam,s3,ec2,vpc,rds
 ```
 
 ### Use Configuration File

@@ -36,7 +36,7 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m pytest --cov=src --cov-report=html
 
 ### Current Test Coverage
 
-**Total Tests: 62 unit tests**
+**Total Tests: 78 unit tests**
 
 - **S3 Scanner Tests** (`test_s3_scanner.py`)
   - 23 comprehensive unit tests
@@ -72,6 +72,19 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m pytest --cov=src --cov-report=html
     - VPC Endpoints
     - Route tables
     - DHCP options
+
+- **RDS Scanner Tests** (`test_rds_scanner.py`)
+  - 16 unit tests
+  - Tests security checks including:
+    - Database encryption
+    - Backup configuration
+    - Public accessibility
+    - Multi-AZ deployment
+    - Deletion protection
+    - Auto minor version upgrades
+    - Performance Insights
+    - IAM authentication
+    - Parameter group security
 
 - **Configuration Tests** (`test_config.py`)
   - 18 unit tests

@@ -19,7 +19,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich import print as rprint
 
 from .models import ScanResult, Finding
-from .scanners import IAMScanner, S3Scanner, EC2Scanner, VPCScanner
+from .scanners import IAMScanner, S3Scanner, EC2Scanner, VPCScanner, RDSScanner
 from .analyzers import FindingAnalyzer
 from .generators import RemediationGenerator, ReportGenerator
 from .config import ConfigManager, ScanConfig
@@ -133,6 +133,10 @@ def scan(config, services, regions, output_format, output_file, generate_remedia
     if 'vpc' in enabled_services:
         service_config = scan_config.services['vpc']
         scanners.append(VPCScanner(session, service_config.regions or region_list))
+    
+    if 'rds' in enabled_services:
+        service_config = scan_config.services['rds']
+        scanners.append(RDSScanner(session, service_config.regions or region_list))
     
     if not scanners:
         console.print("[red]Error: No valid scanners found for the specified services[/red]")

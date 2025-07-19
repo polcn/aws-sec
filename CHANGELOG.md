@@ -5,6 +5,36 @@ All notable changes to the AWS Security Analysis Tool will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2025-07-19
+
+### Added
+- **RDS Security Scanner**: Comprehensive RDS security analysis
+  - Database encryption at rest validation
+  - Automated backup configuration checks
+  - Public accessibility detection
+  - Multi-AZ deployment validation
+  - Deletion protection checks
+  - Auto minor version upgrade status
+  - Performance Insights configuration
+  - IAM database authentication checks
+  - Database snapshot encryption validation
+  - Parameter group security analysis
+- **RDS Remediation Scripts**: Automated fixes for RDS findings
+  - Backup retention configuration
+  - Disable public access
+  - Enable Multi-AZ deployment
+  - Enable deletion protection
+  - Enable auto minor version upgrades
+  - Enable Performance Insights
+  - Enable IAM authentication
+  - Encryption migration guidance
+- **Unit Tests for RDS Scanner**: 16 comprehensive tests
+- **New Security Categories**: Added OPERATIONAL and PATCHING categories
+
+### Changed
+- Default services now include IAM, S3, EC2, VPC, and RDS
+- Updated CLI to support RDS scanning
+
 ## [1.4.0] - 2025-07-19
 
 ### Added

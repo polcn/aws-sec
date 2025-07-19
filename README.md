@@ -4,7 +4,7 @@ A comprehensive, open-source AWS security analysis tool that performs automated 
 
 ## Features
 
-- **Multi-Service Security Scanning**: Support for IAM, S3, EC2, and VPC with more services coming soon
+- **Multi-Service Security Scanning**: Support for IAM, S3, EC2, VPC, and RDS with more services coming soon
 - **Security Findings with Risk Prioritization**: Comprehensive scanning aligned with AWS Well-Architected Security Pillar
 - **Automated Remediation Scripts**: Generate executable Python scripts to fix identified issues
 - **Configuration File Support**: Customize scan behavior, suppress findings, and override severities
@@ -12,6 +12,7 @@ A comprehensive, open-source AWS security analysis tool that performs automated 
 - **S3 Security Analysis**: Comprehensive bucket security checks including encryption, public access, versioning, and more
 - **EC2 Security Analysis**: Instance security, security groups, EBS encryption, network ACLs, and more
 - **VPC Security Analysis**: Flow logs, endpoints, peering, NAT gateways, route tables, and network configuration
+- **RDS Security Analysis**: Database encryption, backups, public access, Multi-AZ, deletion protection, and parameter security
 - **Architecture Diagram Generation**: Auto-generate visual representation of AWS infrastructure
 - **Compliance Framework Mapping**: Map findings to NIST, CIS, SOX, and OWASP frameworks
 - **Multi-Format Reporting**: Generate reports in HTML, Markdown, JSON, and plain text formats
@@ -67,13 +68,13 @@ pip install aws-security-tool  # Note: Has import issues, use source method
 # Activate virtual environment first
 source venv/bin/activate
 
-# Run a security scan on your AWS account (IAM + S3 + EC2 + VPC by default)
+# Run a security scan on your AWS account (IAM + S3 + EC2 + VPC + RDS by default)
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan
 
 # Scan specific services
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services iam
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services s3
-PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services iam,s3,ec2,vpc
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services iam,s3,ec2,vpc,rds
 
 # Use a configuration file
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --config aws-security-config.yaml
@@ -102,7 +103,7 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli list-services
 ## Known Issues
 
 1. **Import Structure**: The package has relative import issues preventing the installed command from working properly. Use the source method with PYTHONPATH as shown above.
-2. **Limited Scanner Coverage**: Currently IAM, S3, EC2, and VPC scanning are implemented. Additional service scanners (RDS, Lambda, CloudTrail, etc.) are planned.
+2. **Limited Scanner Coverage**: Currently IAM, S3, EC2, VPC, and RDS scanning are implemented. Additional service scanners (Lambda, CloudTrail, etc.) are planned.
 
 ## Recent Updates (July 19, 2025)
 
@@ -165,8 +166,9 @@ Current test coverage:
 - S3 Scanner: 85% coverage with 23 unit tests
 - EC2 Scanner: 76% coverage with 8 unit tests
 - VPC Scanner: 77% coverage with 13 unit tests
+- RDS Scanner: 16 unit tests
 - Configuration: 91% coverage with 18 unit tests
-- Overall: 62 total tests
+- Overall: 78 total tests
 
 See [tests/README.md](./tests/README.md) for detailed testing information.
 

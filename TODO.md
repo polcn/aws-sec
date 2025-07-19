@@ -39,6 +39,18 @@
 - [x] Create unit tests for EC2 scanner (8 tests, 76% coverage)
 - [x] Add EC2 remediation scripts
 
+### Version 1.5.0 (July 19, 2025)
+- [x] Implement RDS security scanner
+- [x] Add database encryption at rest checks
+- [x] Add backup configuration validation
+- [x] Add public accessibility checks
+- [x] Add Multi-AZ deployment validation
+- [x] Add parameter group security checks
+- [x] Create unit tests for RDS scanner (16 tests)
+- [x] Add RDS remediation scripts
+- [x] Update CLI to support RDS scanning
+- [x] Update documentation for RDS scanner
+
 ### Version 1.1.1 (July 19, 2025)
 - [x] Create unit tests for S3 scanner (23 tests, 85% coverage)
 - [x] Set up pytest infrastructure with coverage reporting
@@ -50,14 +62,6 @@
 ## High Priority Tasks 🔴
 
 ### Security Scanners
-
-
-- [ ] **RDS Security Scanner**
-  - [ ] Database encryption at rest
-  - [ ] Backup configuration
-  - [ ] Public accessibility
-  - [ ] Multi-AZ deployment
-  - [ ] Parameter group security settings
 
 ### Core Features
 
