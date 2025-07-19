@@ -1,0 +1,55 @@
+================================================================================
+                          AWS SECURITY ANALYSIS REPORT                          
+================================================================================
+
+Generated: 2025-07-19 16:35:03 UTC
+Account: 028358929215
+Regions: 
+
+--------------------------------------------------------------------------------
+SUMMARY
+--------------------------------------------------------------------------------
+Total Findings: 110
+  Critical: 0
+  High:     4
+  Medium:   58
+  Low:      48
+  Info:     0
+
+--------------------------------------------------------------------------------
+CRITICAL AND HIGH SEVERITY FINDINGS
+--------------------------------------------------------------------------------
+
+[HIGH] S3 Bucket Public Access Not Fully Blocked
+Resource: AWS::S3::Bucket - bill-finance-ui-1750520483
+Region: us-east-1
+Risk Score: 70
+Impact: Bucket may be exposed to public access, potentially leaking sensitive data.
+Action: Enable all public access block settings unless public access is explicitly required.
+Note: Automated remediation available
+
+[HIGH] S3 Bucket Policy Allows Public Access
+Resource: AWS::S3::Bucket - bill-finance-ui-1750520483
+Region: us-east-1
+Risk Score: 70
+Impact: Bucket contents may be accessible to unauthorized users.
+Action: Restrict bucket policy to specific principals and add conditions.
+
+[HIGH] S3 Bucket Public Access Not Fully Blocked
+Resource: AWS::S3::Bucket - sapanalyzer4-frontend-028358929215-us-east-1
+Region: us-east-1
+Risk Score: 70
+Impact: Bucket may be exposed to public access, potentially leaking sensitive data.
+Action: Enable all public access block settings unless public access is explicitly required.
+Note: Automated remediation available
+
+[HIGH] S3 Bucket Policy Allows Public Access
+Resource: AWS::S3::Bucket - sapanalyzer4-frontend-028358929215-us-east-1
+Region: us-east-1
+Risk Score: 70
+Impact: Bucket contents may be accessible to unauthorized users.
+Action: Restrict bucket policy to specific principals and add conditions.
+
+================================================================================
+END OF REPORT
+================================================================================

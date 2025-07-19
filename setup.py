@@ -11,8 +11,8 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/yourusername/aws-security-tool",
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
+    packages=find_packages(),
+    package_dir={},
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: System Administrators",

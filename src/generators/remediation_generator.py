@@ -15,7 +15,9 @@ class RemediationGenerator:
         
         # Map finding titles to remediation methods
         remediation_map = {
+            # IAM findings
             "IAM User Without MFA": self._generate_enforce_mfa_script,
+            "User Without MFA Enforcement Policy": self._generate_enforce_mfa_script,
             "Inactive IAM User": self._generate_disable_inactive_user_script,
             "Unused IAM User": self._generate_disable_unused_user_script,
             "Weak Password Length Requirement": self._generate_password_policy_script,
@@ -23,6 +25,15 @@ class RemediationGenerator:
             "Password Expiration Not Configured": self._generate_password_policy_script,
             "Service Account with Console Access": self._generate_remove_console_access_script,
             "Old Access Key Needs Rotation": self._generate_access_key_rotation_reminder,
+            # S3 findings
+            "S3 Bucket Without Encryption": self._generate_s3_encryption_script,
+            "S3 Bucket Using SSE-S3 Instead of SSE-KMS": self._generate_s3_kms_encryption_script,
+            "S3 Bucket Public Access Not Fully Blocked": self._generate_s3_block_public_access_script,
+            "S3 Bucket Without Public Access Block": self._generate_s3_block_public_access_script,
+            "S3 Bucket Versioning Not Enabled": self._generate_s3_versioning_script,
+            "S3 Bucket Access Logging Not Enabled": self._generate_s3_logging_script,
+            "S3 Bucket Policy Does Not Enforce SSL": self._generate_s3_ssl_policy_script,
+            "S3 Bucket ACL Allows Public Access": self._generate_s3_remove_public_acl_script,
         }
         
         # Find matching remediation generator
@@ -81,13 +92,13 @@ class RemediationGenerator:
         DRY_RUN = True
         
         def log_action(action, resource, dry_run=True):
-            action_prefix = "[DRY RUN] " if dry_run else "[APPLIED] "
-            print(f"{action_prefix}{action}: {resource}")
+            prefix = "[DRY RUN] " if dry_run else "[APPLIED] "
+            print(prefix + action + ": " + resource)
         
         def confirm_action(prompt):
             if DRY_RUN:
                 return True
-            response = input(f"{prompt} (yes/no): ").lower()
+            response = input(prompt + " (yes/no): ").lower()
             return response == 'yes'
         """).strip()
     
@@ -547,6 +558,482 @@ class RemediationGenerator:
             rollback_instructions="Reactivate old key if issues arise",
             estimated_impact="Temporary service disruption if not coordinated properly",
             requires_confirmation=False
+        )
+    
+    def _generate_s3_encryption_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to enable S3 bucket encryption"""
+        bucket_name = finding.evidence.get('bucket_name', 'unknown')
+        
+        script_content = self._generate_header() + textwrap.dedent(f"""
+        
+        s3 = boto3.client('s3')
+        
+        def enable_bucket_encryption(bucket_name):
+            '''Enable default encryption for S3 bucket'''
+            
+            encryption_configuration = {{
+                'Rules': [{{
+                    'ApplyServerSideEncryptionByDefault': {{
+                        'SSEAlgorithm': 'AES256'
+                    }}
+                }}]
+            }}
+            
+            try:
+                if not DRY_RUN:
+                    s3.put_bucket_encryption(
+                        Bucket=bucket_name,
+                        ServerSideEncryptionConfiguration=encryption_configuration
+                    )
+                log_action("Enabled SSE-S3 encryption", bucket_name, DRY_RUN)
+                return True
+            except ClientError as e:
+                print(f"Error enabling encryption for {{bucket_name}}: {{e}}")
+                return False
+        
+        def main():
+            print(f"Enabling encryption for S3 bucket: {bucket_name}")
+            if confirm_action(f"Enable SSE-S3 encryption for bucket {bucket_name}?"):
+                if enable_bucket_encryption("{bucket_name}"):
+                    print("Encryption successfully enabled")
+        
+        """) + self._generate_footer()
+        
+        return RemediationScript(
+            finding_id=finding.finding_id,
+            script_name=f"enable_s3_encryption_{bucket_name}.py",
+            description=f"Enable SSE-S3 encryption for bucket {bucket_name}",
+            script_content=script_content,
+            prerequisites="Ensure no applications depend on unencrypted access",
+            rollback_instructions="Remove encryption configuration if issues arise",
+            estimated_impact="Minimal - encryption is transparent to applications",
+            requires_confirmation=True
+        )
+    
+    def _generate_s3_kms_encryption_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to upgrade S3 encryption to KMS"""
+        bucket_name = finding.evidence.get('bucket_name', 'unknown')
+        
+        script_content = self._generate_header() + textwrap.dedent(f"""
+        
+        s3 = boto3.client('s3')
+        
+        def upgrade_to_kms_encryption(bucket_name, kms_key_id=None):
+            '''Upgrade bucket encryption from SSE-S3 to SSE-KMS'''
+            
+            # If no KMS key specified, use AWS managed key
+            encryption_configuration = {{
+                'Rules': [{{
+                    'ApplyServerSideEncryptionByDefault': {{
+                        'SSEAlgorithm': 'aws:kms'
+                    }}
+                }}]
+            }}
+            
+            if kms_key_id:
+                encryption_configuration['Rules'][0]['ApplyServerSideEncryptionByDefault']['KMSMasterKeyID'] = kms_key_id
+            
+            try:
+                if not DRY_RUN:
+                    s3.put_bucket_encryption(
+                        Bucket=bucket_name,
+                        ServerSideEncryptionConfiguration=encryption_configuration
+                    )
+                log_action("Upgraded to SSE-KMS encryption", bucket_name, DRY_RUN)
+                return True
+            except ClientError as e:
+                print(f"Error upgrading encryption for {{bucket_name}}: {{e}}")
+                return False
+        
+        def main():
+            print(f"Upgrading encryption to SSE-KMS for S3 bucket: {bucket_name}")
+            print("Note: This will use AWS managed KMS key. Specify a custom key if needed.")
+            
+            if confirm_action(f"Upgrade to SSE-KMS encryption for bucket {bucket_name}?"):
+                if upgrade_to_kms_encryption("{bucket_name}"):
+                    print("Encryption successfully upgraded to SSE-KMS")
+        
+        """) + self._generate_footer()
+        
+        return RemediationScript(
+            finding_id=finding.finding_id,
+            script_name=f"upgrade_s3_kms_encryption_{bucket_name}.py",
+            description=f"Upgrade bucket {bucket_name} from SSE-S3 to SSE-KMS encryption",
+            script_content=script_content,
+            prerequisites="Ensure IAM roles have KMS permissions if using custom key",
+            rollback_instructions="Revert to SSE-S3 if KMS permissions cause issues",
+            estimated_impact="May require IAM policy updates for KMS access",
+            requires_confirmation=True
+        )
+    
+    def _generate_s3_block_public_access_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to block public access on S3 bucket"""
+        bucket_name = finding.evidence.get('bucket_name', 'unknown')
+        
+        script_content = self._generate_header() + textwrap.dedent(f"""
+        
+        s3 = boto3.client('s3')
+        
+        def block_public_access(bucket_name):
+            '''Enable all public access block settings for S3 bucket'''
+            
+            public_access_block_config = {{
+                'BlockPublicAcls': True,
+                'IgnorePublicAcls': True,
+                'BlockPublicPolicy': True,
+                'RestrictPublicBuckets': True
+            }}
+            
+            try:
+                if not DRY_RUN:
+                    s3.put_public_access_block(
+                        Bucket=bucket_name,
+                        PublicAccessBlockConfiguration=public_access_block_config
+                    )
+                log_action("Enabled public access block", bucket_name, DRY_RUN)
+                
+                # List current settings
+                print("\\nPublic Access Block Settings:")
+                for setting, value in public_access_block_config.items():
+                    print(f"  {{setting}}: {{value}}")
+                
+                return True
+            except ClientError as e:
+                print(f"Error blocking public access for {{bucket_name}}: {{e}}")
+                return False
+        
+        def main():
+            print(f"Blocking public access for S3 bucket: {bucket_name}")
+            print("This will prevent all public access to the bucket.")
+            
+            if confirm_action(f"Block all public access for bucket {bucket_name}?"):
+                if block_public_access("{bucket_name}"):
+                    print("\\nPublic access successfully blocked")
+                    print("Note: Existing public policies and ACLs will be ignored")
+        
+        """) + self._generate_footer()
+        
+        return RemediationScript(
+            finding_id=finding.finding_id,
+            script_name=f"block_s3_public_access_{bucket_name}.py",
+            description=f"Block all public access for bucket {bucket_name}",
+            script_content=script_content,
+            prerequisites="Ensure no legitimate public access is required",
+            rollback_instructions="Disable specific block settings if public access needed",
+            estimated_impact="Will block all public access - ensure this is intended",
+            requires_confirmation=True
+        )
+    
+    def _generate_s3_versioning_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to enable S3 bucket versioning"""
+        bucket_name = finding.evidence.get('bucket_name', 'unknown')
+        
+        script_content = self._generate_header() + textwrap.dedent(f"""
+        
+        s3 = boto3.client('s3')
+        
+        def enable_versioning(bucket_name):
+            '''Enable versioning for S3 bucket'''
+            
+            versioning_configuration = {{
+                'Status': 'Enabled'
+            }}
+            
+            try:
+                if not DRY_RUN:
+                    s3.put_bucket_versioning(
+                        Bucket=bucket_name,
+                        VersioningConfiguration=versioning_configuration
+                    )
+                log_action("Enabled versioning", bucket_name, DRY_RUN)
+                
+                # Get current versioning status
+                if not DRY_RUN:
+                    response = s3.get_bucket_versioning(Bucket=bucket_name)
+                    print(f"\\nVersioning Status: {{response.get('Status', 'Disabled')}}")
+                
+                return True
+            except ClientError as e:
+                print(f"Error enabling versioning for {{bucket_name}}: {{e}}")
+                return False
+        
+        def main():
+            print(f"Enabling versioning for S3 bucket: {bucket_name}")
+            print("This will keep multiple versions of each object.")
+            print("Consider setting up lifecycle policies to manage old versions.")
+            
+            if confirm_action(f"Enable versioning for bucket {bucket_name}?"):
+                if enable_versioning("{bucket_name}"):
+                    print("\\nVersioning successfully enabled")
+                    print("Tip: Configure lifecycle policies to expire old versions")
+        
+        """) + self._generate_footer()
+        
+        return RemediationScript(
+            finding_id=finding.finding_id,
+            script_name=f"enable_s3_versioning_{bucket_name}.py",
+            description=f"Enable versioning for bucket {bucket_name}",
+            script_content=script_content,
+            prerequisites="Plan for increased storage costs from multiple versions",
+            rollback_instructions="Suspend versioning if storage costs become excessive",
+            estimated_impact="Increased storage costs due to multiple object versions",
+            requires_confirmation=True
+        )
+    
+    def _generate_s3_logging_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to enable S3 access logging"""
+        bucket_name = finding.evidence.get('bucket_name', 'unknown')
+        
+        script_content = self._generate_header() + textwrap.dedent(f"""
+        
+        s3 = boto3.client('s3')
+        
+        def enable_access_logging(bucket_name, target_bucket, target_prefix):
+            '''Enable access logging for S3 bucket'''
+            
+            logging_config = {{
+                'LoggingEnabled': {{
+                    'TargetBucket': target_bucket,
+                    'TargetPrefix': target_prefix
+                }}
+            }}
+            
+            try:
+                # First, grant log delivery permissions to target bucket
+                if not DRY_RUN:
+                    # Get current ACL
+                    acl = s3.get_bucket_acl(Bucket=target_bucket)
+                    
+                    # Add log delivery group
+                    log_delivery_grant = {{
+                        'Grantee': {{
+                            'Type': 'Group',
+                            'URI': 'http://acs.amazonaws.com/groups/s3/LogDelivery'
+                        }},
+                        'Permission': 'WRITE'
+                    }}
+                    
+                    if log_delivery_grant not in acl['Grants']:
+                        acl['Grants'].append(log_delivery_grant)
+                        
+                        # Put updated ACL
+                        s3.put_bucket_acl(
+                            Bucket=target_bucket,
+                            AccessControlPolicy={{
+                                'Grants': acl['Grants'],
+                                'Owner': acl['Owner']
+                            }}
+                        )
+                
+                # Enable logging
+                if not DRY_RUN:
+                    s3.put_bucket_logging(
+                        Bucket=bucket_name,
+                        BucketLoggingStatus=logging_config
+                    )
+                
+                log_action(f"Enabled access logging to {{target_bucket}}/{{target_prefix}}", bucket_name, DRY_RUN)
+                return True
+                
+            except ClientError as e:
+                print(f"Error enabling logging for {{bucket_name}}: {{e}}")
+                return False
+        
+        def main():
+            print(f"Enabling access logging for S3 bucket: {bucket_name}")
+            print("\\nYou need to specify:")
+            print("1. Target bucket for logs (can be the same bucket)")
+            print("2. Prefix for log files (e.g., 'logs/')")
+            
+            # For this example, we'll use the same bucket with 'access-logs/' prefix
+            target_bucket = "{bucket_name}"
+            target_prefix = "access-logs/"
+            
+            print(f"\\nLogging configuration:")
+            print(f"  Target bucket: {{target_bucket}}")
+            print(f"  Target prefix: {{target_prefix}}")
+            
+            if confirm_action(f"Enable access logging for bucket {bucket_name}?"):
+                if enable_access_logging("{bucket_name}", target_bucket, target_prefix):
+                    print("\\nAccess logging successfully enabled")
+                    print("Logs will be delivered to the specified location")
+        
+        """) + self._generate_footer()
+        
+        return RemediationScript(
+            finding_id=finding.finding_id,
+            script_name=f"enable_s3_logging_{bucket_name}.py",
+            description=f"Enable access logging for bucket {bucket_name}",
+            script_content=script_content,
+            prerequisites="Decide on target bucket and prefix for logs",
+            rollback_instructions="Disable logging configuration if not needed",
+            estimated_impact="Additional storage costs for access logs",
+            requires_confirmation=True
+        )
+    
+    def _generate_s3_ssl_policy_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to enforce SSL in bucket policy"""
+        bucket_name = finding.evidence.get('bucket_name', 'unknown')
+        
+        script_content = self._generate_header() + textwrap.dedent(f"""
+        
+        s3 = boto3.client('s3')
+        
+        def add_ssl_enforcement_to_policy(bucket_name):
+            '''Add SSL enforcement to bucket policy'''
+            
+            # Get current bucket policy
+            try:
+                response = s3.get_bucket_policy(Bucket=bucket_name)
+                policy = json.loads(response['Policy'])
+            except ClientError as e:
+                if e.response['Error']['Code'] == 'NoSuchBucketPolicy':
+                    # Create new policy
+                    policy = {{
+                        "Version": "2012-10-17",
+                        "Statement": []
+                    }}
+                else:
+                    raise
+            
+            # SSL enforcement statement
+            ssl_statement = {{
+                "Sid": "DenyInsecureConnections",
+                "Effect": "Deny",
+                "Principal": "*",
+                "Action": "s3:*",
+                "Resource": [
+                    f"arn:aws:s3:::{bucket_name}/*",
+                    f"arn:aws:s3:::{bucket_name}"
+                ],
+                "Condition": {{
+                    "Bool": {{
+                        "aws:SecureTransport": "false"
+                    }}
+                }}
+            }}
+            
+            # Check if SSL enforcement already exists
+            ssl_exists = False
+            for statement in policy['Statement']:
+                if statement.get('Sid') == 'DenyInsecureConnections':
+                    ssl_exists = True
+                    break
+            
+            if not ssl_exists:
+                policy['Statement'].append(ssl_statement)
+                
+                try:
+                    if not DRY_RUN:
+                        s3.put_bucket_policy(
+                            Bucket=bucket_name,
+                            Policy=json.dumps(policy)
+                        )
+                    log_action("Added SSL enforcement to bucket policy", bucket_name, DRY_RUN)
+                    return True
+                except ClientError as e:
+                    print(f"Error updating bucket policy: {{e}}")
+                    return False
+            else:
+                print("SSL enforcement already exists in bucket policy")
+                return True
+        
+        def main():
+            print(f"Enforcing SSL/TLS for S3 bucket: {bucket_name}")
+            print("This will deny all non-HTTPS requests to the bucket.")
+            
+            if confirm_action(f"Add SSL enforcement to bucket {bucket_name} policy?"):
+                if add_ssl_enforcement_to_policy("{bucket_name}"):
+                    print("\\nSSL enforcement successfully added")
+                    print("All future requests must use HTTPS")
+        
+        """) + self._generate_footer()
+        
+        return RemediationScript(
+            finding_id=finding.finding_id,
+            script_name=f"enforce_s3_ssl_{bucket_name}.py",
+            description=f"Enforce SSL/TLS for bucket {bucket_name}",
+            script_content=script_content,
+            prerequisites="Ensure all clients support HTTPS",
+            rollback_instructions="Remove the DenyInsecureConnections statement from policy",
+            estimated_impact="HTTP requests will be denied - ensure all clients use HTTPS",
+            requires_confirmation=True
+        )
+    
+    def _generate_s3_remove_public_acl_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to remove public access from bucket ACL"""
+        bucket_name = finding.evidence.get('bucket_name', 'unknown')
+        grantee = finding.evidence.get('grantee', 'unknown')
+        
+        script_content = self._generate_header() + textwrap.dedent(f"""
+        
+        s3 = boto3.client('s3')
+        
+        def remove_public_acl_grants(bucket_name):
+            '''Remove public access grants from bucket ACL'''
+            
+            try:
+                # Get current ACL
+                acl = s3.get_bucket_acl(Bucket=bucket_name)
+                
+                # Filter out public grants
+                public_uris = [
+                    'http://acs.amazonaws.com/groups/global/AllUsers',
+                    'http://acs.amazonaws.com/groups/global/AuthenticatedUsers'
+                ]
+                
+                original_grant_count = len(acl['Grants'])
+                filtered_grants = []
+                
+                for grant in acl['Grants']:
+                    grantee = grant.get('Grantee', {{}})
+                    if grantee.get('Type') == 'Group' and grantee.get('URI') in public_uris:
+                        log_action(f"Removing public grant: {{grant.get('Permission')}}", grantee.get('URI'), DRY_RUN)
+                    else:
+                        filtered_grants.append(grant)
+                
+                if len(filtered_grants) < original_grant_count:
+                    # Update ACL
+                    if not DRY_RUN:
+                        s3.put_bucket_acl(
+                            Bucket=bucket_name,
+                            AccessControlPolicy={{
+                                'Grants': filtered_grants,
+                                'Owner': acl['Owner']
+                            }}
+                        )
+                    
+                    removed_count = original_grant_count - len(filtered_grants)
+                    log_action(f"Removed {{removed_count}} public grants", bucket_name, DRY_RUN)
+                    return True
+                else:
+                    print("No public grants found in bucket ACL")
+                    return True
+                    
+            except ClientError as e:
+                print(f"Error updating bucket ACL: {{e}}")
+                return False
+        
+        def main():
+            print(f"Removing public access from S3 bucket ACL: {bucket_name}")
+            print(f"This will remove grants to: {grantee}")
+            
+            if confirm_action(f"Remove public ACL grants from bucket {bucket_name}?"):
+                if remove_public_acl_grants("{bucket_name}"):
+                    print("\\nPublic ACL grants successfully removed")
+                    print("Consider using bucket policies for access control instead")
+        
+        """) + self._generate_footer()
+        
+        return RemediationScript(
+            finding_id=finding.finding_id,
+            script_name=f"remove_s3_public_acl_{bucket_name}.py",
+            description=f"Remove public ACL grants from bucket {bucket_name}",
+            script_content=script_content,
+            prerequisites="Ensure no legitimate public access is required",
+            rollback_instructions="Re-add specific ACL grants if needed",
+            estimated_impact="Public access via ACL will be removed",
+            requires_confirmation=True
         )
     
     def _group_findings_by_type(self, findings: List[Finding]) -> Dict[str, List[Finding]]:

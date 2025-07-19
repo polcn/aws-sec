@@ -19,7 +19,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich import print as rprint
 
 from .models import ScanResult, Finding
-from .scanners import IAMScanner
+from .scanners import IAMScanner, S3Scanner
 from .analyzers import FindingAnalyzer
 from .generators import RemediationGenerator, ReportGenerator
 
@@ -37,7 +37,7 @@ def cli():
 
 
 @cli.command()
-@click.option('--services', '-s', default='iam', help='Comma-separated list of services to scan (default: iam)')
+@click.option('--services', '-s', default='iam,s3', help='Comma-separated list of services to scan (default: iam,s3)')
 @click.option('--regions', '-r', help='Comma-separated list of regions to scan (default: all enabled regions)')
 @click.option('--output-format', '-f', type=click.Choice(['html', 'markdown', 'json', 'text']), default='html', help='Output format for the report')
 @click.option('--output-file', '-o', help='Output file path (default: aws-security-report-{timestamp}.{format})')
@@ -85,9 +85,8 @@ def scan(services, regions, output_format, output_file, generate_remediation, re
     if 'iam' in service_list:
         scanners.append(IAMScanner(session, region_list))
     
-    # Add more scanners here as they are implemented
-    # if 's3' in service_list:
-    #     scanners.append(S3Scanner(session, region_list))
+    if 's3' in service_list:
+        scanners.append(S3Scanner(session, region_list))
     
     if not scanners:
         console.print("[red]Error: No valid scanners found for the specified services[/red]")
@@ -241,7 +240,7 @@ def list_services():
     
     services = [
         ("iam", "Identity and Access Management", "Available"),
-        ("s3", "Simple Storage Service", "Coming Soon"),
+        ("s3", "Simple Storage Service", "Available"),
         ("ec2", "Elastic Compute Cloud", "Coming Soon"),
         ("rds", "Relational Database Service", "Coming Soon"),
         ("vpc", "Virtual Private Cloud", "Coming Soon"),

@@ -31,6 +31,7 @@ class IAMScanner(BaseScanner):
             # Scan various IAM components
             findings.extend(self._check_root_account_usage(iam))
             findings.extend(self._check_users_without_mfa(iam))
+            findings.extend(self._check_mfa_enforcement_policies(iam))
             findings.extend(self._check_inactive_users(iam))
             findings.extend(self._check_access_key_rotation(iam))
             findings.extend(self._check_overprivileged_policies(iam))
@@ -172,6 +173,149 @@ class IAMScanner(BaseScanner):
             self._handle_error(e, "MFA check")
         
         return findings
+    
+    def _check_mfa_enforcement_policies(self, iam_client) -> List[Finding]:
+        """Check for MFA enforcement policies on users and groups"""
+        findings = []
+        
+        try:
+            # Get all users
+            users = self._paginate(iam_client, 'list_users')
+            
+            for user in users:
+                user_name = user['UserName']
+                
+                # Check if user has console access
+                try:
+                    iam_client.get_login_profile(UserName=user_name)
+                    has_console_access = True
+                except ClientError as e:
+                    if e.response['Error']['Code'] == 'NoSuchEntity':
+                        has_console_access = False
+                    else:
+                        raise
+                
+                if has_console_access:
+                    # Check for MFA enforcement policies
+                    has_mfa_enforcement = False
+                    
+                    # Check inline policies
+                    inline_policies = iam_client.list_user_policies(UserName=user_name)
+                    for policy_name in inline_policies.get('PolicyNames', []):
+                        policy_doc = iam_client.get_user_policy(
+                            UserName=user_name,
+                            PolicyName=policy_name
+                        )
+                        if self._policy_enforces_mfa(policy_doc['PolicyDocument']):
+                            has_mfa_enforcement = True
+                            break
+                    
+                    # Check attached managed policies
+                    if not has_mfa_enforcement:
+                        attached_policies = iam_client.list_attached_user_policies(UserName=user_name)
+                        for policy in attached_policies.get('AttachedPolicies', []):
+                            # Get policy version
+                            policy_version = iam_client.get_policy(PolicyArn=policy['PolicyArn'])
+                            default_version = policy_version['Policy']['DefaultVersionId']
+                            
+                            # Get policy document
+                            policy_doc = iam_client.get_policy_version(
+                                PolicyArn=policy['PolicyArn'],
+                                VersionId=default_version
+                            )
+                            if self._policy_enforces_mfa(policy_doc['PolicyVersion']['Document']):
+                                has_mfa_enforcement = True
+                                break
+                    
+                    # Check group policies
+                    if not has_mfa_enforcement:
+                        groups = iam_client.list_groups_for_user(UserName=user_name)
+                        for group in groups.get('Groups', []):
+                            # Check group inline policies
+                            group_policies = iam_client.list_group_policies(GroupName=group['GroupName'])
+                            for policy_name in group_policies.get('PolicyNames', []):
+                                policy_doc = iam_client.get_group_policy(
+                                    GroupName=group['GroupName'],
+                                    PolicyName=policy_name
+                                )
+                                if self._policy_enforces_mfa(policy_doc['PolicyDocument']):
+                                    has_mfa_enforcement = True
+                                    break
+                            
+                            if has_mfa_enforcement:
+                                break
+                            
+                            # Check group attached policies
+                            attached_policies = iam_client.list_attached_group_policies(GroupName=group['GroupName'])
+                            for policy in attached_policies.get('AttachedPolicies', []):
+                                policy_version = iam_client.get_policy(PolicyArn=policy['PolicyArn'])
+                                default_version = policy_version['Policy']['DefaultVersionId']
+                                policy_doc = iam_client.get_policy_version(
+                                    PolicyArn=policy['PolicyArn'],
+                                    VersionId=default_version
+                                )
+                                if self._policy_enforces_mfa(policy_doc['PolicyVersion']['Document']):
+                                    has_mfa_enforcement = True
+                                    break
+                    
+                    # Create finding if no MFA enforcement found
+                    if not has_mfa_enforcement:
+                        # Check if user already has MFA
+                        mfa_devices = iam_client.list_mfa_devices(UserName=user_name)
+                        has_mfa = len(mfa_devices['MFADevices']) > 0
+                        
+                        if not has_mfa:
+                            findings.append(Finding(
+                                severity=Severity.HIGH,
+                                category=Category.IAM,
+                                resource_type="AWS::IAM::User",
+                                resource_id=user_name,
+                                region="global",
+                                account_id=self.account_id,
+                                title="User Without MFA Enforcement Policy",
+                                description=f"IAM user '{user_name}' has console access but no policy enforcing MFA usage.",
+                                impact="Without MFA enforcement policies, users can perform actions without MFA even if it's configured.",
+                                recommendation="Apply an MFA enforcement policy to ensure MFA is required for all sensitive actions.",
+                                compliance_frameworks=[ComplianceFramework.NIST],
+                                automated_remediation_available=True,
+                                evidence={
+                                    "user_name": user_name,
+                                    "has_console_access": True,
+                                    "has_mfa_device": has_mfa,
+                                    "has_mfa_enforcement_policy": False
+                                }
+                            ))
+        
+        except ClientError as e:
+            self._handle_error(e, "MFA enforcement check")
+        
+        return findings
+    
+    def _policy_enforces_mfa(self, policy_document: Dict[str, Any]) -> bool:
+        """Check if a policy document enforces MFA"""
+        if isinstance(policy_document, str):
+            try:
+                policy_document = json.loads(policy_document)
+            except json.JSONDecodeError:
+                return False
+        
+        # Look for Deny statements with MFA conditions
+        for statement in policy_document.get('Statement', []):
+            if statement.get('Effect') == 'Deny':
+                conditions = statement.get('Condition', {})
+                
+                # Check for MFA-related conditions
+                bool_conditions = conditions.get('Bool', {}) or conditions.get('BoolIfExists', {})
+                if 'aws:MultiFactorAuthPresent' in bool_conditions:
+                    if bool_conditions['aws:MultiFactorAuthPresent'] in ['false', False]:
+                        return True
+                
+                # Check for MFA age conditions
+                numeric_conditions = conditions.get('NumericGreaterThan', {})
+                if 'aws:MultiFactorAuthAge' in numeric_conditions:
+                    return True
+        
+        return False
     
     def _check_inactive_users(self, iam_client) -> List[Finding]:
         """Check for inactive users"""

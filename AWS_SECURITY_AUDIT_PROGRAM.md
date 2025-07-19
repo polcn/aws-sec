@@ -133,30 +133,49 @@ This document outlines a comprehensive AWS Security Audit Program based on the A
 - Scope resources appropriately
 - Regular permission reviews
 
-### 2. Future Security Domains (Roadmap)
+### 2. Data Protection (S3) - Now Available
 
-#### 2.1 Data Protection (S3)
-- Bucket encryption
-- Public access blocks
-- Bucket policies
-- Access logging
-- Versioning and lifecycle
+#### 2.1 Bucket Security Controls
+**Controls Tested:**
+- Default encryption configuration (SSE-S3, SSE-KMS)
+- Public access block settings
+- Bucket ACL public grants
+- Bucket policy analysis
+- SSL/TLS enforcement in policies
 
-#### 2.2 Network Security (VPC)
+**Risk Levels:**
+- HIGH: Public access not blocked or bucket policy allows public access
+- MEDIUM: No encryption enabled or missing SSL enforcement
+- LOW: Using SSE-S3 instead of SSE-KMS
+
+#### 2.2 Data Management Controls
+**Controls Tested:**
+- Versioning configuration
+- Access logging enablement
+- Lifecycle policy presence
+- Object Lock for compliance buckets
+
+**Risk Levels:**
+- MEDIUM: Versioning or logging disabled
+- LOW: No lifecycle policies configured
+
+### 3. Future Security Domains (Roadmap)
+
+#### 3.1 Network Security (VPC)
 - Security group rules
 - Network ACLs
 - Internet gateway attachments
 - VPN configurations
 - Flow logs
 
-#### 2.3 Compute Security (EC2)
+#### 3.2 Compute Security (EC2)
 - Instance metadata service v2
 - EBS encryption
 - Public IP assignments
 - Instance profiles
 - Systems Manager compliance
 
-#### 2.4 Logging and Monitoring
+#### 3.3 Logging and Monitoring
 - CloudTrail configuration
 - Config rules compliance
 - GuardDuty findings
