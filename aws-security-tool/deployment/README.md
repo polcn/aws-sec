@@ -35,7 +35,7 @@ aws-security-tool scan
 
 ### Scan Specific Services
 ```bash
-aws-security-tool scan --services iam,s3,ec2
+aws-security-tool scan --services iam,s3,ec2,vpc,rds
 ```
 
 ### Generate Different Report Formats
@@ -133,6 +133,10 @@ For running the security tool, the IAM user/role needs the following permissions
         "ec2:Describe*",
         "s3:Get*",
         "s3:List*",
+        "vpc:Describe*",
+        "rds:Describe*",
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams",
         "sts:GetCallerIdentity"
       ],
       "Resource": "*"

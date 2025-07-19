@@ -166,9 +166,9 @@ Current test coverage:
 - S3 Scanner: 85% coverage with 23 unit tests
 - EC2 Scanner: 76% coverage with 8 unit tests
 - VPC Scanner: 77% coverage with 13 unit tests
-- RDS Scanner: 16 unit tests
+- RDS Scanner: 18 unit tests
 - Configuration: 91% coverage with 18 unit tests
-- Overall: 78 total tests
+- Overall: 80 total tests
 
 See [tests/README.md](./tests/README.md) for detailed testing information.
 

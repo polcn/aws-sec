@@ -68,7 +68,7 @@ services:
     enabled: true
   
   rds:
-    enabled: false  # Coming soon
+    enabled: true
 ```
 
 ### Risk Scoring Configuration

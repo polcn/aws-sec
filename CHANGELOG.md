@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enable Performance Insights
   - Enable IAM authentication
   - Encryption migration guidance
-- **Unit Tests for RDS Scanner**: 16 comprehensive tests
+- **Unit Tests for RDS Scanner**: 18 comprehensive tests
 - **New Security Categories**: Added OPERATIONAL and PATCHING categories
 
 ### Changed

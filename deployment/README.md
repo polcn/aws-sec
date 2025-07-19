@@ -143,6 +143,7 @@ For running the security tool, the IAM user/role needs the following permissions
         "s3:Get*",
         "s3:List*",
         "vpc:Describe*",
+        "rds:Describe*",
         "logs:DescribeLogGroups",
         "logs:DescribeLogStreams",
         "sts:GetCallerIdentity"

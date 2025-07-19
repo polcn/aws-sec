@@ -8,10 +8,10 @@ import sys
 import os
 
 # Add the src directory to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'aws-security-tool', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 # Import and run the main CLI
-from cli import main
+from src.cli import cli as main
 
 if __name__ == '__main__':
     main()

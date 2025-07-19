@@ -82,11 +82,11 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m pytest --cov=src --cov-report=term-m
 PYTHONPATH=/home/ec2-user/aws-sec python -m pytest tests/test_s3_scanner.py -v
 ```
 
-Current test coverage (78 total tests):
+Current test coverage (80 total tests):
 - S3 Scanner: 85% coverage with 23 unit tests
 - EC2 Scanner: 76% coverage with 8 unit tests
 - VPC Scanner: 77% coverage with 13 unit tests
-- RDS Scanner: 16 unit tests
+- RDS Scanner: 18 unit tests
 - Configuration: 91% coverage with 18 unit tests
 
 ### Recent Successful Scan
