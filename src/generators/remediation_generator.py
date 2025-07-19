@@ -39,6 +39,10 @@ class RemediationGenerator:
             "EBS Volume Not Encrypted": self._generate_ebs_encryption_script,
             "Security Group Allows Ingress from Internet": self._generate_sg_restriction_script,
             "Security Group Allows Egress from Internet": self._generate_sg_restriction_script,
+            # VPC findings
+            "VPC Flow Logs Not Enabled": self._generate_vpc_flow_logs_script,
+            "VPC Missing Recommended Endpoints": self._generate_vpc_endpoints_script,
+            "NAT Gateway in Private Subnet": self._generate_nat_gateway_fix_script,
         }
         
         # Find matching remediation generator
@@ -1326,6 +1330,337 @@ class RemediationGenerator:
             script_content=script_content,
             risk_level="high",
             estimated_impact="May disrupt connectivity - ensure alternative access before applying"
+        )
+    
+    def _generate_vpc_flow_logs_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to enable VPC Flow Logs"""
+        vpc_id = finding.resource_id
+        region = finding.region
+        
+        script_content = textwrap.dedent(f"""
+        #!/usr/bin/env python3
+        '''
+        Remediation: Enable VPC Flow Logs
+        Finding: {finding.title}
+        Resource: {vpc_id}
+        '''
+        
+        import boto3
+        from botocore.exceptions import ClientError
+        import time
+        
+        def enable_vpc_flow_logs(vpc_id, region, log_destination_type='cloud-watch-logs'):
+            '''Enable VPC Flow Logs for network traffic monitoring'''
+            ec2 = boto3.client('ec2', region_name=region)
+            logs = boto3.client('logs', region_name=region)
+            iam = boto3.client('iam')
+            
+            try:
+                # Create CloudWatch Logs group
+                log_group_name = f'/aws/vpc/flowlogs/{{vpc_id}}'
+                
+                try:
+                    logs.create_log_group(logGroupName=log_group_name)
+                    print(f"Created CloudWatch Logs group: {{log_group_name}}")
+                except logs.exceptions.ResourceAlreadyExistsException:
+                    print(f"CloudWatch Logs group already exists: {{log_group_name}}")
+                
+                # Create IAM role for Flow Logs
+                role_name = f'vpc-flow-logs-role-{{vpc_id}}'
+                trust_policy = {{
+                    'Version': '2012-10-17',
+                    'Statement': [{{
+                        'Effect': 'Allow',
+                        'Principal': {{'Service': 'vpc-flow-logs.amazonaws.com'}},
+                        'Action': 'sts:AssumeRole'
+                    }}]
+                }}
+                
+                try:
+                    iam.create_role(
+                        RoleName=role_name,
+                        AssumeRolePolicyDocument=json.dumps(trust_policy),
+                        Description='Role for VPC Flow Logs'
+                    )
+                    
+                    # Attach policy to role
+                    policy_document = {{
+                        'Version': '2012-10-17',
+                        'Statement': [{{
+                            'Effect': 'Allow',
+                            'Action': [
+                                'logs:CreateLogGroup',
+                                'logs:CreateLogStream',
+                                'logs:PutLogEvents',
+                                'logs:DescribeLogGroups',
+                                'logs:DescribeLogStreams'
+                            ],
+                            'Resource': '*'
+                        }}]
+                    }}
+                    
+                    iam.put_role_policy(
+                        RoleName=role_name,
+                        PolicyName='vpc-flow-logs-policy',
+                        PolicyDocument=json.dumps(policy_document)
+                    )
+                    
+                    print(f"Created IAM role: {{role_name}}")
+                    time.sleep(10)  # Wait for role to be available
+                    
+                except iam.exceptions.EntityAlreadyExistsException:
+                    print(f"IAM role already exists: {{role_name}}")
+                
+                # Get role ARN
+                role = iam.get_role(RoleName=role_name)
+                role_arn = role['Role']['Arn']
+                
+                # Enable Flow Logs
+                response = ec2.create_flow_logs(
+                    ResourceIds=[vpc_id],
+                    ResourceType='VPC',
+                    TrafficType='ALL',
+                    LogDestinationType=log_destination_type,
+                    LogGroupName=log_group_name,
+                    DeliverLogsPermissionArn=role_arn
+                )
+                
+                if response['Unsuccessful']:
+                    print(f"Failed to create flow logs: {{response['Unsuccessful']}}")
+                    return False
+                else:
+                    flow_log_id = response['FlowLogIds'][0]
+                    print(f"Successfully enabled VPC Flow Logs: {{flow_log_id}}")
+                    print(f"Logs will be delivered to: {{log_group_name}}")
+                    return True
+                    
+            except ClientError as e:
+                print(f"Error enabling VPC Flow Logs: {{e}}")
+                return False
+        
+        if __name__ == "__main__":
+            vpc_id = "{vpc_id}"
+            region = "{region}"
+            
+            print(f"Enabling Flow Logs for VPC {{vpc_id}} in region {{region}}")
+            print("\\nThis will:")
+            print("1. Create a CloudWatch Logs group")
+            print("2. Create an IAM role for Flow Logs")
+            print("3. Enable Flow Logs for ALL traffic")
+            
+            if input("\\nProceed with remediation? (yes/no): ").lower() == 'yes':
+                if enable_vpc_flow_logs(vpc_id, region):
+                    print("\\nRemediation completed successfully")
+                    print("Note: Flow logs may take a few minutes to start appearing")
+                else:
+                    print("\\nRemediation failed")
+            else:
+                print("\\nRemediation cancelled")
+        """)
+        
+        return RemediationScript(
+            finding_id=finding.id,
+            title=f"Enable Flow Logs for VPC {vpc_id}",
+            description="Enable VPC Flow Logs for network traffic monitoring and security analysis",
+            script_type="python",
+            script_content=script_content,
+            risk_level="low",
+            estimated_impact="No service disruption - adds monitoring capability"
+        )
+    
+    def _generate_vpc_endpoints_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to create VPC endpoints"""
+        vpc_id = finding.resource_id
+        region = finding.region
+        missing_endpoints = finding.evidence.get('missing_endpoints', [])
+        
+        script_content = textwrap.dedent(f"""
+        #!/usr/bin/env python3
+        '''
+        Remediation: Create recommended VPC endpoints
+        Finding: {finding.title}
+        Resource: {vpc_id}
+        '''
+        
+        import boto3
+        from botocore.exceptions import ClientError
+        
+        def create_vpc_endpoint(vpc_id, service_name, region, endpoint_type='Gateway'):
+            '''Create VPC endpoint for AWS service'''
+            ec2 = boto3.client('ec2', region_name=region)
+            
+            try:
+                # Get route tables for the VPC
+                route_tables = ec2.describe_route_tables(
+                    Filters=[{{'Name': 'vpc-id', 'Values': [vpc_id]}}]
+                )
+                route_table_ids = [rt['RouteTableId'] for rt in route_tables['RouteTables']]
+                
+                # Create endpoint
+                if endpoint_type == 'Gateway':
+                    response = ec2.create_vpc_endpoint(
+                        VpcId=vpc_id,
+                        ServiceName=f'com.amazonaws.{{region}}.{{service_name}}',
+                        RouteTableIds=route_table_ids
+                    )
+                else:
+                    # For interface endpoints, get subnets
+                    subnets = ec2.describe_subnets(
+                        Filters=[{{'Name': 'vpc-id', 'Values': [vpc_id]}}]
+                    )
+                    subnet_ids = [subnet['SubnetId'] for subnet in subnets['Subnets']]
+                    
+                    response = ec2.create_vpc_endpoint(
+                        VpcId=vpc_id,
+                        ServiceName=f'com.amazonaws.{{region}}.{{service_name}}',
+                        VpcEndpointType='Interface',
+                        SubnetIds=subnet_ids
+                    )
+                
+                endpoint_id = response['VpcEndpoint']['VpcEndpointId']
+                print(f"Created VPC endpoint for {{service_name}}: {{endpoint_id}}")
+                return endpoint_id
+                
+            except ClientError as e:
+                if 'already exists' in str(e):
+                    print(f"VPC endpoint for {{service_name}} already exists")
+                else:
+                    print(f"Error creating endpoint for {{service_name}}: {{e}}")
+                return None
+        
+        def main():
+            vpc_id = "{vpc_id}"
+            region = "{region}"
+            missing_endpoints = {missing_endpoints}
+            
+            # Service configurations
+            service_configs = {{
+                's3': {{'type': 'Gateway'}},
+                'dynamodb': {{'type': 'Gateway'}},
+                'ec2': {{'type': 'Interface'}},
+                'sts': {{'type': 'Interface'}},
+                'kms': {{'type': 'Interface'}}
+            }}
+            
+            print(f"Creating VPC endpoints for VPC {{vpc_id}} in region {{region}}")
+            print(f"Missing endpoints: {{', '.join(missing_endpoints)}}")
+            
+            created_count = 0
+            for service in missing_endpoints:
+                config = service_configs.get(service, {{'type': 'Interface'}})
+                print(f"\\nCreating {{config['type']}} endpoint for {{service}}...")
+                
+                if create_vpc_endpoint(vpc_id, service, region, config['type']):
+                    created_count += 1
+            
+            print(f"\\nCreated {{created_count}} out of {{len(missing_endpoints)}} endpoints")
+            print("\\nNote: Interface endpoints may incur hourly charges")
+            print("Gateway endpoints (S3, DynamoDB) are free")
+        
+        if __name__ == "__main__":
+            if input("\\nProceed with creating VPC endpoints? (yes/no): ").lower() == 'yes':
+                main()
+            else:
+                print("\\nRemediation cancelled")
+        """)
+        
+        return RemediationScript(
+            finding_id=finding.id,
+            title=f"Create VPC endpoints for {vpc_id}",
+            description=f"Create missing VPC endpoints for services: {', '.join(missing_endpoints)}",
+            script_type="python",
+            script_content=script_content,
+            risk_level="low",
+            estimated_impact="Interface endpoints incur hourly charges; improves security and may reduce data transfer costs"
+        )
+    
+    def _generate_nat_gateway_fix_script(self, finding: Finding) -> RemediationScript:
+        """Generate guidance for NAT Gateway configuration"""
+        nat_gw_id = finding.resource_id
+        region = finding.region
+        
+        script_content = textwrap.dedent(f"""
+        #!/usr/bin/env python3
+        '''
+        Remediation: Fix NAT Gateway configuration
+        Finding: {finding.title}
+        Resource: {nat_gw_id}
+        '''
+        
+        import boto3
+        from botocore.exceptions import ClientError
+        
+        def check_nat_gateway_configuration(nat_gw_id, region):
+            '''Check and provide guidance for NAT Gateway configuration'''
+            ec2 = boto3.client('ec2', region_name=region)
+            
+            try:
+                # Get NAT Gateway details
+                response = ec2.describe_nat_gateways(NatGatewayIds=[nat_gw_id])
+                nat_gateway = response['NatGateways'][0]
+                
+                subnet_id = nat_gateway['SubnetId']
+                vpc_id = nat_gateway['VpcId']
+                
+                print(f"NAT Gateway {{nat_gw_id}} Configuration:")
+                print(f"- VPC: {{vpc_id}}")
+                print(f"- Subnet: {{subnet_id}}")
+                print(f"- State: {{nat_gateway['State']}}")
+                
+                # Check subnet routing
+                route_tables = ec2.describe_route_tables(
+                    Filters=[
+                        {{'Name': 'association.subnet-id', 'Values': [subnet_id]}}
+                    ]
+                )
+                
+                print("\\nSubnet Route Table Analysis:")
+                for rt in route_tables['RouteTables']:
+                    for route in rt['Routes']:
+                        if route.get('GatewayId', '').startswith('igw-'):
+                            print("✓ Subnet has route to Internet Gateway (public subnet)")
+                            return True
+                
+                print("✗ Subnet does not have route to Internet Gateway")
+                print("\\nRemediation Steps:")
+                print("1. Create a new NAT Gateway in a public subnet")
+                print("2. Update route tables to use the new NAT Gateway")
+                print("3. Delete the incorrectly placed NAT Gateway")
+                
+                return False
+                
+            except ClientError as e:
+                print(f"Error checking NAT Gateway: {{e}}")
+                return False
+        
+        if __name__ == "__main__":
+            nat_gw_id = "{nat_gw_id}"
+            region = "{region}"
+            
+            print(f"Checking NAT Gateway {{nat_gw_id}} in region {{region}}")
+            print("\\nNAT Gateways must be placed in public subnets to function correctly")
+            
+            if check_nat_gateway_configuration(nat_gw_id, region):
+                print("\\nNAT Gateway is correctly configured")
+            else:
+                print("\\nManual remediation required - see steps above")
+                print("\\nAWS CLI commands for remediation:")
+                print("# 1. Create new NAT Gateway in public subnet:")
+                print("aws ec2 create-nat-gateway --subnet-id <public-subnet-id> --allocation-id <eip-allocation-id>")
+                print("\\n# 2. Update route table:")
+                print("aws ec2 create-route --route-table-id <rtb-id> --destination-cidr-block 0.0.0.0/0 --nat-gateway-id <new-nat-gw-id>")
+                print("\\n# 3. Delete old NAT Gateway:")
+                print(f"aws ec2 delete-nat-gateway --nat-gateway-id {{nat_gw_id}}")
+        """)
+        
+        return RemediationScript(
+            finding_id=finding.id,
+            title=f"Fix NAT Gateway {nat_gw_id} configuration",
+            description="Provide guidance for moving NAT Gateway to public subnet",
+            script_type="python",
+            script_content=script_content,
+            risk_level="high",
+            estimated_impact="Requires creating new NAT Gateway and updating routes - plan for brief connectivity disruption"
         )
     
     def _load_templates(self) -> Dict[str, str]:

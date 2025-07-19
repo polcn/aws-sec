@@ -13,6 +13,14 @@
 - [x] Update documentation with new features
 - [x] Create comprehensive AWS Security Audit Program document
 
+### Version 1.3.0 (July 19, 2025)
+- [x] Implement VPC security scanner
+- [x] Add VPC Flow Logs analysis
+- [x] Add VPC endpoint recommendations
+- [x] Add VPC peering security checks
+- [x] Create unit tests for VPC scanner (13 tests, 77% coverage)
+- [x] Add VPC remediation scripts
+
 ### Version 1.2.0 (July 19, 2025)
 - [x] Implement EC2 security scanner
 - [x] Add security group analysis to EC2 scanner
@@ -31,12 +39,6 @@
 
 ### Security Scanners
 
-- [ ] **VPC Security Scanner**
-  - [ ] Network ACL analysis
-  - [ ] VPC Flow Logs configuration
-  - [ ] Internet Gateway attachments
-  - [ ] NAT Gateway configurations
-  - [ ] VPC Endpoint policies
 
 - [ ] **RDS Security Scanner**
   - [ ] Database encryption at rest

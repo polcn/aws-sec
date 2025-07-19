@@ -17,6 +17,19 @@ def mock_boto3_session():
     """Create a mock boto3 session for testing"""
     session = Mock()
     session.region_name = 'us-east-1'
+    
+    # Mock STS client for get_caller_identity
+    sts_client = Mock()
+    sts_client.get_caller_identity.return_value = {'Account': '123456789012'}
+    
+    # Make session.client return appropriate mocks
+    def client_side_effect(service_name, **kwargs):
+        if service_name == 'sts':
+            return sts_client
+        return Mock()
+    
+    session.client.side_effect = client_side_effect
+    
     return session
 
 

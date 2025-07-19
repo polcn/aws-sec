@@ -5,6 +5,28 @@ All notable changes to the AWS Security Analysis Tool will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-07-19
+
+### Added
+- **VPC Security Scanner**: Comprehensive VPC security analysis
+  - VPC tagging and DNS configuration checks
+  - VPC Flow Logs monitoring validation
+  - Internet Gateway and NAT Gateway configuration
+  - VPC Peering connection security analysis
+  - VPC endpoint recommendations for cost and security
+  - Route table configuration checks
+  - DHCP options security review
+  - VPN connection configuration analysis
+- **VPC Remediation Scripts**: Automated fixes for VPC findings
+  - Enable VPC Flow Logs with CloudWatch integration
+  - Create missing VPC endpoints (S3, DynamoDB, EC2, etc.)
+  - Fix NAT Gateway configuration issues
+- **Unit Tests for VPC Scanner**: 13 comprehensive tests with 77% code coverage
+
+### Changed
+- Default services list now includes VPC scanner
+- Updated CLI to support VPC scanning
+
 ## [1.2.0] - 2025-07-19
 
 ### Added

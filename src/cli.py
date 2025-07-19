@@ -19,7 +19,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich import print as rprint
 
 from .models import ScanResult, Finding
-from .scanners import IAMScanner, S3Scanner, EC2Scanner
+from .scanners import IAMScanner, S3Scanner, EC2Scanner, VPCScanner
 from .analyzers import FindingAnalyzer
 from .generators import RemediationGenerator, ReportGenerator
 
@@ -90,6 +90,9 @@ def scan(services, regions, output_format, output_file, generate_remediation, re
     
     if 'ec2' in service_list:
         scanners.append(EC2Scanner(session, region_list))
+    
+    if 'vpc' in service_list:
+        scanners.append(VPCScanner(session, region_list))
     
     if not scanners:
         console.print("[red]Error: No valid scanners found for the specified services[/red]")
@@ -245,8 +248,8 @@ def list_services():
         ("iam", "Identity and Access Management", "Available"),
         ("s3", "Simple Storage Service", "Available"),
         ("ec2", "Elastic Compute Cloud", "Available"),
+        ("vpc", "Virtual Private Cloud", "Available"),
         ("rds", "Relational Database Service", "Coming Soon"),
-        ("vpc", "Virtual Private Cloud", "Coming Soon"),
         ("lambda", "Lambda Functions", "Coming Soon"),
         ("cloudtrail", "CloudTrail Logging", "Coming Soon"),
     ]

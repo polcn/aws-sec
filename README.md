@@ -4,12 +4,13 @@ A comprehensive, open-source AWS security analysis tool that performs automated 
 
 ## Features
 
-- **Multi-Service Security Scanning**: Support for IAM, S3, and EC2 with more services coming soon
+- **Multi-Service Security Scanning**: Support for IAM, S3, EC2, and VPC with more services coming soon
 - **Security Findings with Risk Prioritization**: Comprehensive scanning aligned with AWS Well-Architected Security Pillar
 - **Automated Remediation Scripts**: Generate executable Python scripts to fix identified issues
 - **IAM Security Analysis**: Deep analysis including MFA enforcement validation
 - **S3 Security Analysis**: Comprehensive bucket security checks including encryption, public access, versioning, and more
 - **EC2 Security Analysis**: Instance security, security groups, EBS encryption, network ACLs, and more
+- **VPC Security Analysis**: Flow logs, endpoints, peering, NAT gateways, route tables, and network configuration
 - **Architecture Diagram Generation**: Auto-generate visual representation of AWS infrastructure
 - **Compliance Framework Mapping**: Map findings to NIST, CIS, SOX, and OWASP frameworks
 - **Multi-Format Reporting**: Generate reports in HTML, Markdown, JSON, and plain text formats
@@ -94,9 +95,14 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli list-services
 ## Known Issues
 
 1. **Import Structure**: The package has relative import issues preventing the installed command from working properly. Use the source method with PYTHONPATH as shown above.
-2. **Limited Scanner Coverage**: Currently IAM, S3, and EC2 scanning are implemented. Additional service scanners (RDS, VPC, Lambda, etc.) are planned.
+2. **Limited Scanner Coverage**: Currently IAM, S3, EC2, and VPC scanning are implemented. Additional service scanners (RDS, Lambda, CloudTrail, etc.) are planned.
 
 ## Recent Updates (July 19, 2025)
+
+### Version 1.3.0
+- **Added VPC Security Scanner**: Comprehensive VPC security analysis including flow logs, endpoints, peering, and network configuration
+- **VPC Remediation Scripts**: Automated fixes for flow logs, VPC endpoints, and NAT gateway configuration
+- **Enhanced Test Coverage**: Added unit tests for VPC scanner (77% coverage)
 
 ### Version 1.2.0
 - **Added EC2 Security Scanner**: Comprehensive EC2 security analysis including instances, security groups, EBS volumes, and network configuration
@@ -138,7 +144,8 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m pytest --cov=src --cov-report=term-m
 Current test coverage:
 - S3 Scanner: 85% coverage with 23 unit tests
 - EC2 Scanner: 76% coverage with 8 unit tests
-- Overall: 37% coverage with 31 total tests
+- VPC Scanner: 77% coverage with 13 unit tests
+- Overall: 44 total tests
 
 See [tests/README.md](./tests/README.md) for detailed testing information.
 
