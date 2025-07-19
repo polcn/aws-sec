@@ -4,11 +4,12 @@ A comprehensive, open-source AWS security analysis tool that performs automated 
 
 ## Features
 
-- **Multi-Service Security Scanning**: Support for IAM and S3 with more services coming soon
+- **Multi-Service Security Scanning**: Support for IAM, S3, and EC2 with more services coming soon
 - **Security Findings with Risk Prioritization**: Comprehensive scanning aligned with AWS Well-Architected Security Pillar
 - **Automated Remediation Scripts**: Generate executable Python scripts to fix identified issues
 - **IAM Security Analysis**: Deep analysis including MFA enforcement validation
 - **S3 Security Analysis**: Comprehensive bucket security checks including encryption, public access, versioning, and more
+- **EC2 Security Analysis**: Instance security, security groups, EBS encryption, network ACLs, and more
 - **Architecture Diagram Generation**: Auto-generate visual representation of AWS infrastructure
 - **Compliance Framework Mapping**: Map findings to NIST, CIS, SOX, and OWASP frameworks
 - **Multi-Format Reporting**: Generate reports in HTML, Markdown, JSON, and plain text formats
@@ -93,10 +94,16 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli list-services
 ## Known Issues
 
 1. **Import Structure**: The package has relative import issues preventing the installed command from working properly. Use the source method with PYTHONPATH as shown above.
-2. **Limited Scanner Coverage**: Currently only IAM and S3 scanning are implemented. Additional service scanners (EC2, RDS, VPC, etc.) are planned.
+2. **Limited Scanner Coverage**: Currently IAM, S3, and EC2 scanning are implemented. Additional service scanners (RDS, VPC, Lambda, etc.) are planned.
 
 ## Recent Updates (July 19, 2025)
 
+### Version 1.2.0
+- **Added EC2 Security Scanner**: Comprehensive EC2 security analysis including instances, security groups, EBS volumes, and network configuration
+- **EC2 Remediation Scripts**: Automated fixes for IMDSv2, security groups, and EBS encryption
+- **Enhanced Test Coverage**: Added unit tests for EC2 scanner (76% coverage)
+
+### Version 1.1.1
 - **Added S3 Security Scanner**: Comprehensive S3 bucket security analysis
 - **Enhanced IAM Scanner**: Added MFA enforcement policy validation
 - **Fixed Import Structure**: Added `__main__.py` for proper module execution
@@ -130,7 +137,8 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m pytest --cov=src --cov-report=term-m
 
 Current test coverage:
 - S3 Scanner: 85% coverage with 23 unit tests
-- More tests coming for other components
+- EC2 Scanner: 76% coverage with 8 unit tests
+- Overall: 37% coverage with 31 total tests
 
 See [tests/README.md](./tests/README.md) for detailed testing information.
 

@@ -5,6 +5,26 @@ All notable changes to the AWS Security Analysis Tool will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-07-19
+
+### Added
+- **EC2 Security Scanner**: Comprehensive EC2 security analysis
+  - Instance security checks (IMDSv2 enforcement, public IPs, IAM roles)
+  - Security group analysis for overly permissive rules
+  - EBS volume encryption validation
+  - VPC endpoint recommendations
+  - Network ACL security checks
+  - Elastic IP cost optimization
+- **EC2 Remediation Scripts**: Automated fixes for EC2 findings
+  - Enable IMDSv2 enforcement
+  - Restrict security group rules
+  - Enable EBS encryption
+- **Unit Tests for EC2 Scanner**: 8 comprehensive tests with 76% code coverage
+
+### Changed
+- Default scan now includes EC2 along with IAM and S3
+- Updated CLI to support EC2 scanning
+
 ## [1.1.1] - 2025-07-19
 
 ### Added

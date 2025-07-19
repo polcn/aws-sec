@@ -13,6 +13,12 @@
 - [x] Update documentation with new features
 - [x] Create comprehensive AWS Security Audit Program document
 
+### Version 1.2.0 (July 19, 2025)
+- [x] Implement EC2 security scanner
+- [x] Add security group analysis to EC2 scanner
+- [x] Create unit tests for EC2 scanner (8 tests, 76% coverage)
+- [x] Add EC2 remediation scripts
+
 ### Version 1.1.1 (July 19, 2025)
 - [x] Create unit tests for S3 scanner (23 tests, 85% coverage)
 - [x] Set up pytest infrastructure with coverage reporting
@@ -24,13 +30,6 @@
 ## High Priority Tasks 🔴
 
 ### Security Scanners
-- [ ] **EC2 Security Scanner**
-  - [ ] Security group analysis (overly permissive rules)
-  - [ ] Instance metadata service v2 enforcement
-  - [ ] EBS volume encryption status
-  - [ ] Public IP assignments
-  - [ ] Instance profile permissions
-  - [ ] Systems Manager compliance
 
 - [ ] **VPC Security Scanner**
   - [ ] Network ACL analysis

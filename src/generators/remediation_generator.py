@@ -34,6 +34,11 @@ class RemediationGenerator:
             "S3 Bucket Access Logging Not Enabled": self._generate_s3_logging_script,
             "S3 Bucket Policy Does Not Enforce SSL": self._generate_s3_ssl_policy_script,
             "S3 Bucket ACL Allows Public Access": self._generate_s3_remove_public_acl_script,
+            # EC2 findings
+            "EC2 Instance Not Enforcing IMDSv2": self._generate_ec2_imdsv2_script,
+            "EBS Volume Not Encrypted": self._generate_ebs_encryption_script,
+            "Security Group Allows Ingress from Internet": self._generate_sg_restriction_script,
+            "Security Group Allows Egress from Internet": self._generate_sg_restriction_script,
         }
         
         # Find matching remediation generator
@@ -1111,6 +1116,217 @@ class RemediationGenerator:
             except ClientError as e:
                 print(f"Error retrieving password policy: {e}")
         """)
+    
+    def _generate_ec2_imdsv2_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to enforce IMDSv2 on EC2 instance"""
+        instance_id = finding.resource_id
+        region = finding.region
+        
+        script_content = textwrap.dedent(f"""
+        #!/usr/bin/env python3
+        '''
+        Remediation: Enable IMDSv2 enforcement for EC2 instance
+        Finding: {finding.title}
+        Resource: {instance_id}
+        '''
+        
+        import boto3
+        from botocore.exceptions import ClientError
+        
+        def enforce_imdsv2(instance_id, region):
+            '''Enforce IMDSv2 on EC2 instance'''
+            ec2 = boto3.client('ec2', region_name=region)
+            
+            try:
+                response = ec2.modify_instance_metadata_options(
+                    InstanceId=instance_id,
+                    HttpTokens='required',
+                    HttpPutResponseHopLimit=1,
+                    HttpEndpoint='enabled'
+                )
+                print(f"Successfully enforced IMDSv2 on instance {{instance_id}}")
+                return True
+            except ClientError as e:
+                print(f"Error enforcing IMDSv2: {{e}}")
+                return False
+        
+        if __name__ == "__main__":
+            instance_id = "{instance_id}"
+            region = "{region}"
+            
+            print(f"Enforcing IMDSv2 on instance {{instance_id}} in region {{region}}")
+            if enforce_imdsv2(instance_id, region):
+                print("Remediation completed successfully")
+            else:
+                print("Remediation failed")
+        """)
+        
+        return RemediationScript(
+            finding_id=finding.id,
+            title=f"Enable IMDSv2 for {instance_id}",
+            description="Enforce Instance Metadata Service version 2 for better security",
+            script_type="python",
+            script_content=script_content,
+            risk_level="low",
+            estimated_impact="Minimal - applications using IMDSv1 may need updates"
+        )
+    
+    def _generate_ebs_encryption_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to enable EBS encryption"""
+        volume_id = finding.resource_id
+        region = finding.region
+        
+        script_content = textwrap.dedent(f"""
+        #!/usr/bin/env python3
+        '''
+        Remediation: Enable default EBS encryption for the region
+        Finding: {finding.title}
+        Note: Cannot encrypt existing unencrypted volumes. Must create encrypted snapshot and new volume.
+        '''
+        
+        import boto3
+        from botocore.exceptions import ClientError
+        
+        def enable_ebs_encryption_by_default(region):
+            '''Enable EBS encryption by default for the region'''
+            ec2 = boto3.client('ec2', region_name=region)
+            
+            try:
+                response = ec2.enable_ebs_encryption_by_default()
+                if response['EbsEncryptionByDefault']:
+                    print(f"Successfully enabled EBS encryption by default in {{region}}")
+                    return True
+            except ClientError as e:
+                print(f"Error enabling EBS encryption: {{e}}")
+                return False
+        
+        def create_encrypted_volume_from_snapshot(volume_id, region):
+            '''Create encrypted copy of unencrypted volume'''
+            ec2 = boto3.client('ec2', region_name=region)
+            
+            print(f"Creating encrypted copy of volume {{volume_id}}...")
+            print("Note: This is a manual process requiring:")
+            print("1. Create snapshot of the unencrypted volume")
+            print("2. Copy snapshot with encryption enabled")
+            print("3. Create new encrypted volume from snapshot")
+            print("4. Stop instance and replace volume")
+            print("\\nRecommended AWS CLI commands:")
+            print(f"aws ec2 create-snapshot --volume-id {{volume_id}} --region {{region}}")
+            print("aws ec2 copy-snapshot --source-snapshot-id <snapshot-id> --encrypted --region {{region}}")
+            print("aws ec2 create-volume --snapshot-id <encrypted-snapshot-id> --encrypted --region {{region}}")
+        
+        if __name__ == "__main__":
+            volume_id = "{volume_id}"
+            region = "{region}"
+            
+            print(f"Enabling EBS encryption by default for region {{region}}")
+            if enable_ebs_encryption_by_default(region):
+                print("\\nDefault encryption enabled for new volumes")
+                print(f"\\nFor existing volume {{volume_id}}:")
+                create_encrypted_volume_from_snapshot(volume_id, region)
+            else:
+                print("Failed to enable default encryption")
+        """)
+        
+        return RemediationScript(
+            finding_id=finding.id,
+            title=f"Enable EBS encryption for {volume_id}",
+            description="Enable default EBS encryption and provide guidance for encrypting existing volume",
+            script_type="python",
+            script_content=script_content,
+            risk_level="medium",
+            estimated_impact="Requires downtime to replace unencrypted volumes"
+        )
+    
+    def _generate_sg_restriction_script(self, finding: Finding) -> RemediationScript:
+        """Generate script to restrict security group rules"""
+        sg_id = finding.resource_id
+        region = finding.region
+        metadata = finding.evidence or {}
+        
+        script_content = textwrap.dedent(f"""
+        #!/usr/bin/env python3
+        '''
+        Remediation: Restrict overly permissive security group rule
+        Finding: {finding.title}
+        Resource: {sg_id}
+        '''
+        
+        import boto3
+        from botocore.exceptions import ClientError
+        
+        def restrict_security_group_rule(sg_id, region, rule_direction, protocol, from_port, to_port):
+            '''Remove overly permissive rule and suggest replacement'''
+            ec2 = boto3.client('ec2', region_name=region)
+            
+            try:
+                if rule_direction == 'ingress':
+                    # Revoke the overly permissive rule
+                    if protocol == '-1':
+                        ec2.revoke_security_group_ingress(
+                            GroupId=sg_id,
+                            IpPermissions=[{{
+                                'IpProtocol': '-1',
+                                'IpRanges': [{{'CidrIp': '0.0.0.0/0'}}]
+                            }}]
+                        )
+                    else:
+                        ec2.revoke_security_group_ingress(
+                            GroupId=sg_id,
+                            IpPermissions=[{{
+                                'IpProtocol': protocol,
+                                'FromPort': from_port,
+                                'ToPort': to_port,
+                                'IpRanges': [{{'CidrIp': '0.0.0.0/0'}}]
+                            }}]
+                        )
+                    print(f"Successfully revoked overly permissive ingress rule from {{sg_id}}")
+                    
+                    # Suggest adding more restrictive rules
+                    print("\\nSuggested replacements:")
+                    print("1. Restrict to specific IP ranges (e.g., corporate network)")
+                    print("2. Use VPN or bastion host for management access")
+                    print("3. For web traffic, consider using ALB/CloudFront")
+                    
+                else:
+                    print("Note: Egress rules to 0.0.0.0/0 are often necessary for internet access")
+                    print("Consider using VPC endpoints for AWS services to reduce internet exposure")
+                
+                return True
+                
+            except ClientError as e:
+                print(f"Error modifying security group: {{e}}")
+                return False
+        
+        if __name__ == "__main__":
+            sg_id = "{sg_id}"
+            region = "{region}"
+            rule_direction = "{metadata.get('rule_direction', 'ingress')}"
+            protocol = "{metadata.get('protocol', '-1')}"
+            from_port = {metadata.get('from_port', -1)}
+            to_port = {metadata.get('to_port', -1)}
+            
+            print(f"Restricting security group {{sg_id}} in region {{region}}")
+            print(f"Rule: {{rule_direction}} {{protocol}} ports {{from_port}}-{{to_port}} from 0.0.0.0/0")
+            
+            if input("\\nProceed with remediation? (yes/no): ").lower() == 'yes':
+                if restrict_security_group_rule(sg_id, region, rule_direction, protocol, from_port, to_port):
+                    print("\\nRemediation completed successfully")
+                else:
+                    print("\\nRemediation failed")
+            else:
+                print("\\nRemediation cancelled")
+        """)
+        
+        return RemediationScript(
+            finding_id=finding.id,
+            title=f"Restrict security group {sg_id}",
+            description=f"Remove overly permissive {metadata.get('rule_direction', 'ingress')} rule allowing 0.0.0.0/0",
+            script_type="python",
+            script_content=script_content,
+            risk_level="high",
+            estimated_impact="May disrupt connectivity - ensure alternative access before applying"
+        )
     
     def _load_templates(self) -> Dict[str, str]:
         """Load remediation templates"""
