@@ -5,6 +5,38 @@ All notable changes to the AWS Security Analysis Tool will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-07-19
+
+### Added
+- **Configuration File Support**: YAML-based configuration for customizing scan behavior
+  - Enable/disable specific AWS services
+  - Set custom regions per service  
+  - Override finding severities
+  - Suppress specific findings
+  - Configure output preferences
+  - Filter resources by AWS tags
+  - Set custom risk scoring weights
+- **New CLI Commands**:
+  - `generate-config`: Generate example configuration file
+  - `--config` option: Specify configuration file path
+- **Configuration Features**:
+  - Default configuration paths supported
+  - CLI options override configuration settings
+  - Service-specific region configuration
+  - Resource tag inclusion/exclusion filters
+  - API retry configuration
+  - Scan metadata and tagging
+- **Unit Tests for Configuration**: 18 tests with 91% code coverage
+- **Documentation**: Comprehensive configuration guide
+
+### Changed
+- Default services now include IAM, S3, EC2, and VPC
+- CLI scan command now supports configuration files
+- Improved error handling for configuration loading
+
+### Fixed
+- Pydantic validator compatibility for default service configuration
+
 ## [1.3.0] - 2025-07-19
 
 ### Added

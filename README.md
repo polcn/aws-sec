@@ -7,6 +7,7 @@ A comprehensive, open-source AWS security analysis tool that performs automated 
 - **Multi-Service Security Scanning**: Support for IAM, S3, EC2, and VPC with more services coming soon
 - **Security Findings with Risk Prioritization**: Comprehensive scanning aligned with AWS Well-Architected Security Pillar
 - **Automated Remediation Scripts**: Generate executable Python scripts to fix identified issues
+- **Configuration File Support**: Customize scan behavior, suppress findings, and override severities
 - **IAM Security Analysis**: Deep analysis including MFA enforcement validation
 - **S3 Security Analysis**: Comprehensive bucket security checks including encryption, public access, versioning, and more
 - **EC2 Security Analysis**: Instance security, security groups, EBS encryption, network ACLs, and more
@@ -66,13 +67,19 @@ pip install aws-security-tool  # Note: Has import issues, use source method
 # Activate virtual environment first
 source venv/bin/activate
 
-# Run a security scan on your AWS account (IAM + S3 by default)
+# Run a security scan on your AWS account (IAM + S3 + EC2 + VPC by default)
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan
 
 # Scan specific services
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services iam
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services s3
-PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services iam,s3
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services iam,s3,ec2,vpc
+
+# Use a configuration file
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --config aws-security-config.yaml
+
+# Generate an example configuration file
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli generate-config
 
 # Generate remediation scripts
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --generate-remediation
@@ -99,6 +106,18 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli list-services
 
 ## Recent Updates (July 19, 2025)
 
+### Version 1.4.0
+- **Added Configuration File Support**: YAML-based configuration for customizing scan behavior
+- **Configuration Features**: 
+  - Enable/disable specific services
+  - Set custom regions per service
+  - Override finding severities
+  - Suppress specific findings
+  - Configure output preferences
+  - Filter resources by tags
+- **CLI Enhancement**: Added `generate-config` command to create example configuration files
+- **Enhanced Test Coverage**: Added unit tests for configuration (91% coverage)
+
 ### Version 1.3.0
 - **Added VPC Security Scanner**: Comprehensive VPC security analysis including flow logs, endpoints, peering, and network configuration
 - **VPC Remediation Scripts**: Automated fixes for flow logs, VPC endpoints, and NAT gateway configuration
@@ -121,6 +140,7 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli list-services
 
 ## Documentation
 
+- [Configuration Guide](./docs/configuration.md) - How to use configuration files
 - [Setup Guide](./README_SETUP.md) - Virtual environment setup and troubleshooting
 - [Changelog](./CHANGELOG.md) - Version history and updates
 - [TODO List](./TODO.md) - Roadmap and planned features
@@ -145,7 +165,8 @@ Current test coverage:
 - S3 Scanner: 85% coverage with 23 unit tests
 - EC2 Scanner: 76% coverage with 8 unit tests
 - VPC Scanner: 77% coverage with 13 unit tests
-- Overall: 44 total tests
+- Configuration: 91% coverage with 18 unit tests
+- Overall: 62 total tests
 
 See [tests/README.md](./tests/README.md) for detailed testing information.
 

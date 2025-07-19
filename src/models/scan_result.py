@@ -14,6 +14,7 @@ class ScanResult(BaseModel):
     findings: List[Finding] = Field(default_factory=list)
     total_resources_scanned: int = 0
     scan_errors: List[Dict[str, Any]] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
     
     def add_finding(self, finding: Finding):
         """Add a finding to the scan results"""

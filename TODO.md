@@ -13,6 +13,18 @@
 - [x] Update documentation with new features
 - [x] Create comprehensive AWS Security Audit Program document
 
+### Version 1.4.0 (July 19, 2025)
+- [x] Add configuration file support
+- [x] YAML configuration for scan preferences
+- [x] Service-specific scan options
+- [x] Custom risk scoring weights
+- [x] Finding severity overrides
+- [x] Suppress specific findings
+- [x] Resource tag filtering
+- [x] Create unit tests for configuration (18 tests, 91% coverage)
+- [x] Add generate-config command
+- [x] Document configuration usage
+
 ### Version 1.3.0 (July 19, 2025)
 - [x] Implement VPC security scanner
 - [x] Add VPC Flow Logs analysis
@@ -48,10 +60,6 @@
   - [ ] Parameter group security settings
 
 ### Core Features
-- [ ] **Configuration File Support**
-  - [ ] YAML configuration for scan preferences
-  - [ ] Service-specific scan options
-  - [ ] Custom risk scoring weights
 
 - [ ] **Reporting Enhancements**
   - [ ] Executive summary dashboard

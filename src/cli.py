@@ -22,6 +22,7 @@ from .models import ScanResult, Finding
 from .scanners import IAMScanner, S3Scanner, EC2Scanner, VPCScanner
 from .analyzers import FindingAnalyzer
 from .generators import RemediationGenerator, ReportGenerator
+from .config import ConfigManager, ScanConfig
 
 
 console = Console()
@@ -37,17 +38,35 @@ def cli():
 
 
 @cli.command()
-@click.option('--services', '-s', default='iam,s3,ec2', help='Comma-separated list of services to scan (default: iam,s3,ec2)')
-@click.option('--regions', '-r', help='Comma-separated list of regions to scan (default: all enabled regions)')
-@click.option('--output-format', '-f', type=click.Choice(['html', 'markdown', 'json', 'text']), default='html', help='Output format for the report')
-@click.option('--output-file', '-o', help='Output file path (default: aws-security-report-{timestamp}.{format})')
+@click.option('--config', '-c', type=click.Path(exists=True), help='Configuration file path')
+@click.option('--services', '-s', help='Comma-separated list of services to scan (overrides config)')
+@click.option('--regions', '-r', help='Comma-separated list of regions to scan (overrides config)')
+@click.option('--output-format', '-f', type=click.Choice(['html', 'markdown', 'json', 'text']), help='Output format for the report')
+@click.option('--output-file', '-o', help='Output file path')
 @click.option('--generate-remediation', '-g', is_flag=True, help='Generate remediation scripts')
 @click.option('--remediation-dir', default='remediation-scripts', help='Directory to save remediation scripts')
 @click.option('--profile', '-p', help='AWS profile to use')
 @click.option('--no-progress', is_flag=True, help='Disable progress indicators')
 @click.option('--severity-filter', help='Filter findings by minimum severity (CRITICAL,HIGH,MEDIUM,LOW,INFO)')
-def scan(services, regions, output_format, output_file, generate_remediation, remediation_dir, profile, no_progress, severity_filter):
+def scan(config, services, regions, output_format, output_file, generate_remediation, remediation_dir, profile, no_progress, severity_filter):
     """Perform a security scan of your AWS account"""
+    
+    # Load configuration
+    config_manager = ConfigManager(config)
+    try:
+        scan_config = config_manager.load_config()
+    except Exception as e:
+        console.print(f"[yellow]Warning: Failed to load config file: {e}[/yellow]")
+        scan_config = ScanConfig()  # Use defaults
+    
+    # Merge CLI options with config
+    cli_options = {
+        'services': [s.strip() for s in services.split(',')] if services else None,
+        'regions': [r.strip() for r in regions.split(',')] if regions else None,
+        'output_format': output_format,
+        'output_file': output_file,
+    }
+    config_manager.merge_cli_options(**cli_options)
     
     # Setup AWS session
     try:
@@ -57,42 +76,63 @@ def scan(services, regions, output_format, output_file, generate_remediation, re
         console.print(f"[red]Error: Failed to establish AWS session: {e}[/red]")
         sys.exit(1)
     
-    # Parse services and regions
-    service_list = [s.strip() for s in services.split(',')]
-    region_list = [r.strip() for r in regions.split(',')] if regions else None
+    # Get enabled services and their configurations
+    enabled_services = [
+        service_name for service_name, service_config in scan_config.services.items()
+        if service_config.enabled
+    ]
     
-    # Initialize scan result
+    # Use first service's regions if specified, otherwise use all enabled regions
+    region_list = None
+    for service_name, service_config in scan_config.services.items():
+        if service_config.enabled and service_config.regions:
+            region_list = service_config.regions
+            break
+    
+    # Initialize scan result with config metadata
     scan_result = ScanResult(
-        scan_id=f"scan-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}",
+        scan_id=scan_config.scan_name or f"scan-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}",
         account_id=account_id,
         regions=region_list or [],
-        services_scanned=service_list,
+        services_scanned=enabled_services,
         start_time=datetime.utcnow()
     )
     
+    # Add scan tags if configured
+    if scan_config.scan_tags:
+        scan_result.metadata = scan_config.scan_tags
+    
     console.print(f"\n[bold blue]AWS Security Analysis Tool[/bold blue]")
+    if scan_config.scan_name:
+        console.print(f"Scan Name: [cyan]{scan_config.scan_name}[/cyan]")
     console.print(f"Account: [yellow]{account_id}[/yellow]")
-    console.print(f"Services: [green]{', '.join(service_list)}[/green]")
+    console.print(f"Services: [green]{', '.join(enabled_services)}[/green]")
     if region_list:
         console.print(f"Regions: [green]{', '.join(region_list)}[/green]")
+    if config:
+        console.print(f"Config: [blue]{config}[/blue]")
     console.print()
     
     # Perform scans
     all_findings = []
     scanners = []
     
-    # Initialize scanners based on requested services
-    if 'iam' in service_list:
-        scanners.append(IAMScanner(session, region_list))
+    # Initialize scanners based on enabled services
+    if 'iam' in enabled_services:
+        service_config = scan_config.services['iam']
+        scanners.append(IAMScanner(session, service_config.regions or region_list))
     
-    if 's3' in service_list:
-        scanners.append(S3Scanner(session, region_list))
+    if 's3' in enabled_services:
+        service_config = scan_config.services['s3']
+        scanners.append(S3Scanner(session, service_config.regions or region_list))
     
-    if 'ec2' in service_list:
-        scanners.append(EC2Scanner(session, region_list))
+    if 'ec2' in enabled_services:
+        service_config = scan_config.services['ec2']
+        scanners.append(EC2Scanner(session, service_config.regions or region_list))
     
-    if 'vpc' in service_list:
-        scanners.append(VPCScanner(session, region_list))
+    if 'vpc' in enabled_services:
+        service_config = scan_config.services['vpc']
+        scanners.append(VPCScanner(session, service_config.regions or region_list))
     
     if not scanners:
         console.print("[red]Error: No valid scanners found for the specified services[/red]")
@@ -120,17 +160,36 @@ def scan(services, regions, output_format, output_file, generate_remediation, re
     
     # Add findings to scan result
     for finding in all_findings:
-        scan_result.add_finding(finding)
+        # Apply severity overrides from config
+        if scan_config.risk_scoring.severity_overrides:
+            if finding.title in scan_config.risk_scoring.severity_overrides:
+                from .models import Severity
+                new_severity = scan_config.risk_scoring.severity_overrides[finding.title]
+                finding.severity = Severity[new_severity.upper()]
+                # Recalculate risk score based on new severity
+                severity_scores = {
+                    Severity.CRITICAL: scan_config.risk_scoring.critical_weight,
+                    Severity.HIGH: scan_config.risk_scoring.high_weight,
+                    Severity.MEDIUM: scan_config.risk_scoring.medium_weight,
+                    Severity.LOW: scan_config.risk_scoring.low_weight,
+                    Severity.INFO: scan_config.risk_scoring.informational_weight
+                }
+                finding.risk_score = int(severity_scores.get(finding.severity, 50))
+        
+        # Check if finding should be suppressed
+        if finding.title not in scan_config.output.suppress_findings:
+            scan_result.add_finding(finding)
     
-    # Apply severity filter if specified
-    if severity_filter:
+    # Apply severity filter if specified (CLI or config)
+    min_severity_str = severity_filter or (scan_config.notifications.min_severity if scan_config.notifications.enabled else None)
+    if min_severity_str:
         from .models import Severity
-        min_severity = Severity[severity_filter.upper()]
+        min_severity = Severity[min_severity_str.upper()]
         severity_order = [Severity.INFO, Severity.LOW, Severity.MEDIUM, Severity.HIGH, Severity.CRITICAL]
         min_index = severity_order.index(min_severity)
         
         filtered_findings = [
-            f for f in all_findings 
+            f for f in scan_result.findings 
             if severity_order.index(f.severity) >= min_index
         ]
         scan_result.findings = filtered_findings
@@ -144,7 +203,10 @@ def scan(services, regions, output_format, output_file, generate_remediation, re
     console.print("\n[bold]Generating report...[/bold]")
     report_generator = ReportGenerator(scan_result)
     
-    # Determine output file name
+    # Determine output file name and format from config or CLI
+    output_format = output_format or scan_config.output.format
+    output_file = output_file or scan_config.output.file
+    
     if not output_file:
         timestamp = datetime.utcnow().strftime('%Y%m%d-%H%M%S')
         output_file = f"aws-security-report-{timestamp}.{output_format}"
@@ -258,6 +320,28 @@ def list_services():
         table.add_row(service, description, status)
     
     console.print(table)
+
+
+@cli.command()
+@click.option('--output', '-o', default='aws-security-config.example.yaml', help='Output file path')
+def generate_config(output):
+    """Generate an example configuration file"""
+    
+    console.print(f"\n[bold]Generating example configuration file...[/bold]")
+    
+    config_manager = ConfigManager()
+    saved_path = config_manager.save_example_config(output)
+    
+    console.print(f"[green]✓[/green] Example configuration saved to: [blue]{saved_path}[/blue]")
+    console.print("\nYou can use this configuration file with:")
+    console.print(f"  [cyan]aws-security-tool scan --config {saved_path}[/cyan]")
+    console.print("\nCustomize the file to:")
+    console.print("  • Enable/disable specific services")
+    console.print("  • Set custom regions per service")
+    console.print("  • Override finding severities")
+    console.print("  • Suppress specific findings")
+    console.print("  • Configure output preferences")
+    console.print("  • Filter resources by tags")
 
 
 def display_scan_summary(scan_result: ScanResult):

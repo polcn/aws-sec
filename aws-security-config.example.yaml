@@ -1,0 +1,65 @@
+services:
+  iam:
+    enabled: true
+    filters:
+      exclude_users:
+      - terraform-*
+      - ci-*
+  s3:
+    enabled: true
+    regions:
+    - us-east-1
+    - us-west-2
+    filters:
+      exclude_buckets:
+      - '*-logs-*'
+      - '*-backup-*'
+  ec2:
+    enabled: true
+    exclude_regions:
+    - ap-south-1
+  vpc:
+    enabled: true
+  rds:
+    enabled: false
+risk_scoring:
+  critical_weight: 100
+  high_weight: 80
+  medium_weight: 60
+  low_weight: 40
+  severity_overrides:
+    S3 Bucket Without Lifecycle Policy: LOW
+    Unused IAM User: HIGH
+output:
+  format: markdown
+  file: security-report.md
+  include_passed_checks: false
+  suppress_findings:
+  - S3 Bucket Using SSE-S3 Instead of SSE-KMS
+  group_by: severity
+compliance:
+  frameworks:
+  - NIST
+  - CIS
+  - SOX
+  custom_mappings:
+    Custom Finding Type:
+    - NIST
+    - CIS
+scan_name: Production Security Scan
+scan_tags:
+  environment: production
+  team: security
+max_concurrent_regions: 5
+api_retry_attempts: 3
+exclude_resource_tags:
+  Environment:
+  - development
+  - test
+  Ignore-Security-Scan:
+  - 'true'
+include_resource_tags:
+  Environment:
+  - production
+  Critical:
+  - 'true'
