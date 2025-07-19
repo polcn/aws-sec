@@ -115,6 +115,25 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli list-services
 - [AWS Security Tool PRD](./aws-security-tool-prd.md) - Product requirements document
 - Additional docs in the [docs](./docs) directory
 
+## Testing
+
+The project includes comprehensive unit tests:
+
+```bash
+# Run all tests
+source venv/bin/activate
+PYTHONPATH=/home/ec2-user/aws-sec python -m pytest
+
+# Run with coverage
+PYTHONPATH=/home/ec2-user/aws-sec python -m pytest --cov=src --cov-report=term-missing
+```
+
+Current test coverage:
+- S3 Scanner: 85% coverage with 23 unit tests
+- More tests coming for other components
+
+See [tests/README.md](./tests/README.md) for detailed testing information.
+
 ## Contributing
 
 We welcome contributions! Please check our [TODO list](./TODO.md) for areas where you can help. Some ways to contribute:

@@ -5,6 +5,17 @@ All notable changes to the AWS Security Analysis Tool will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-07-19
+
+### Added
+- **Comprehensive Unit Tests for S3 Scanner**: 23 unit tests with 85% code coverage
+- **Testing Infrastructure**: pytest configuration with coverage reporting
+- **Test Documentation**: Added tests/README.md with testing guidelines
+
+### Changed
+- Updated requirements.txt to include testing dependencies
+- Updated main README with testing section
+
 ## [1.1.0] - 2025-07-19
 
 ### Added

@@ -68,6 +68,23 @@ This project requires Python 3.9 or higher. The virtual environment uses Python 
 1. The package has relative import issues that prevent the installed `aws-security-tool` command from working properly
 2. The tool needs to be run with PYTHONPATH set as shown above
 
+### Running Tests
+
+To run the unit tests:
+```bash
+# Basic test run
+PYTHONPATH=/home/ec2-user/aws-sec python -m pytest
+
+# With coverage report
+PYTHONPATH=/home/ec2-user/aws-sec python -m pytest --cov=src --cov-report=term-missing
+
+# Run specific test file
+PYTHONPATH=/home/ec2-user/aws-sec python -m pytest tests/test_s3_scanner.py -v
+```
+
+Current test coverage:
+- S3 Scanner: 85% coverage with 23 unit tests
+
 ### Recent Successful Scan
 
 The tool has been successfully tested on AWS account 028358929215 on July 19, 2025:

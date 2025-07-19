@@ -13,8 +13,12 @@
 - [x] Update documentation with new features
 - [x] Create comprehensive AWS Security Audit Program document
 
+### Version 1.1.1 (July 19, 2025)
+- [x] Create unit tests for S3 scanner (23 tests, 85% coverage)
+- [x] Set up pytest infrastructure with coverage reporting
+- [x] Add testing documentation and guidelines
+
 ## In Progress 🚧
-- [ ] Create unit tests for S3 scanner
 - [ ] Add integration tests for multi-service scanning
 
 ## High Priority Tasks 🔴
