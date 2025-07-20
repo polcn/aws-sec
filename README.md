@@ -16,6 +16,7 @@ A comprehensive, open-source AWS security analysis tool that performs automated 
 - **Architecture Diagram Generation**: Auto-generate visual representation of AWS infrastructure
 - **Compliance Framework Mapping**: Map findings to NIST, CIS, SOX, and OWASP frameworks with percentage scoring
 - **Multi-Format Reporting**: Generate reports in HTML, Markdown, JSON, CSV, and plain text formats
+- **Executive Dashboard**: Interactive HTML dashboard with security score, charts, and remediation priorities
 - **Compliance Percentage Scoring**: Calculate weighted compliance scores for each framework with risk assessments
 
 ## Latest Scan Results
@@ -92,6 +93,9 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --output-format markdow
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --output-format json --output-file report.json
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --output-format csv --output-file report.csv
 
+# Generate executive dashboard
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --generate-dashboard --output-file dashboard.html
+
 # List available services
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli list-services
 ```
@@ -107,7 +111,28 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli list-services
 1. **Import Structure**: The package has relative import issues preventing the installed command from working properly. Use the source method with PYTHONPATH as shown above.
 2. **Limited Scanner Coverage**: Currently IAM, S3, EC2, VPC, and RDS scanning are implemented. Additional service scanners (Lambda, CloudTrail, etc.) are planned.
 
-## Recent Updates (July 19, 2025)
+## Recent Updates (July 20, 2025)
+
+### Version 1.7.0
+- **Added Executive Dashboard**: Interactive HTML dashboard with security visualization
+  - Overall security score with A-F grading system
+  - Visual charts for severity distribution, compliance, and service findings
+  - Key metrics display with attack surface analysis
+  - Remediation priority matrix
+  - Responsive design for all devices
+- **Dashboard CLI Integration**: New `--generate-dashboard` option for creating executive dashboards
+- **Fixed Dashboard Generation**: Resolved Jinja2 template issues with built-in filters
+
+### Version 1.6.0
+- **Added CSV Export Format**: Export findings to spreadsheet-compatible CSV files
+- **Compliance Percentage Scoring**: Calculate weighted compliance scores for each framework
+  - Risk level assessments and estimated passed checks
+  - Visual compliance indicators in HTML reports
+
+### Version 1.5.0
+- **Added RDS Security Scanner**: Comprehensive database security analysis
+- **RDS Remediation Scripts**: Automated fixes for database security findings
+- **New Security Categories**: Added OPERATIONAL and PATCHING categories
 
 ### Version 1.4.0
 - **Added Configuration File Support**: YAML-based configuration for customizing scan behavior

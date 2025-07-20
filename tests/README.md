@@ -36,7 +36,7 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m pytest --cov=src --cov-report=html
 
 ### Current Test Coverage
 
-**Total Tests: 80 unit tests**
+**Total Tests: 80+ unit tests**
 
 - **S3 Scanner Tests** (`test_s3_scanner.py`)
   - 23 comprehensive unit tests
@@ -97,6 +97,14 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m pytest --cov=src --cov-report=html
     - Finding suppression
     - CLI option merging
 
+- **Report Generator Tests** (`test_report_generator.py`)
+  - Tests report generation including:
+    - HTML report generation
+    - Markdown report generation
+    - JSON report generation
+    - CSV export functionality
+    - Compliance percentage scoring
+
 ### Test Conventions
 
 - Test files are named `test_<module_name>.py`
@@ -136,4 +144,5 @@ Tests should be run:
 - [ ] Create performance benchmarks
 - [ ] Add tests for CLI commands
 - [ ] Implement test fixtures for common AWS resources
-- [ ] Add tests for report generation
+- [ ] Add tests for dashboard generation
+- [ ] Add tests for remediation script generation

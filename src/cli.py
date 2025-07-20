@@ -21,7 +21,7 @@ from rich import print as rprint
 from .models import ScanResult, Finding
 from .scanners import IAMScanner, S3Scanner, EC2Scanner, VPCScanner, RDSScanner
 from .analyzers import FindingAnalyzer
-from .generators import RemediationGenerator, ReportGenerator
+from .generators import RemediationGenerator, ReportGenerator, DashboardGenerator
 from .config import ConfigManager, ScanConfig
 
 
@@ -41,7 +41,7 @@ def cli():
 @click.option('--config', '-c', type=click.Path(exists=True), help='Configuration file path')
 @click.option('--services', '-s', help='Comma-separated list of services to scan (overrides config)')
 @click.option('--regions', '-r', help='Comma-separated list of regions to scan (overrides config)')
-@click.option('--output-format', '-f', type=click.Choice(['html', 'markdown', 'json', 'text', 'csv']), help='Output format for the report')
+@click.option('--output-format', '-f', type=click.Choice(['html', 'markdown', 'json', 'text', 'csv', 'dashboard']), help='Output format for the report')
 @click.option('--output-file', '-o', help='Output file path')
 @click.option('--generate-remediation', '-g', is_flag=True, help='Generate remediation scripts')
 @click.option('--remediation-dir', default='remediation-scripts', help='Directory to save remediation scripts')
@@ -205,7 +205,6 @@ def scan(config, services, regions, output_format, output_file, generate_remedia
     
     # Generate report
     console.print("\n[bold]Generating report...[/bold]")
-    report_generator = ReportGenerator(scan_result)
     
     # Determine output file name and format from config or CLI
     output_format = output_format or scan_config.output.format
@@ -217,16 +216,21 @@ def scan(config, services, regions, output_format, output_file, generate_remedia
     
     # Generate report in requested format
     try:
-        if output_format == 'html':
-            report_content = report_generator.generate_html_report()
-        elif output_format == 'markdown':
-            report_content = report_generator.generate_markdown_report()
-        elif output_format == 'json':
-            report_content = report_generator.generate_json_report()
-        elif output_format == 'csv':
-            report_content = report_generator.generate_csv_report()
-        else:  # text
-            report_content = report_generator.generate_text_report()
+        if output_format == 'dashboard':
+            dashboard_generator = DashboardGenerator(scan_result)
+            report_content = dashboard_generator.generate_dashboard()
+        else:
+            report_generator = ReportGenerator(scan_result)
+            if output_format == 'html':
+                report_content = report_generator.generate_html_report()
+            elif output_format == 'markdown':
+                report_content = report_generator.generate_markdown_report()
+            elif output_format == 'json':
+                report_content = report_generator.generate_json_report()
+            elif output_format == 'csv':
+                report_content = report_generator.generate_csv_report()
+            else:  # text
+                report_content = report_generator.generate_text_report()
         
         # Write report to file
         with open(output_file, 'w', encoding='utf-8') as f:
@@ -234,7 +238,9 @@ def scan(config, services, regions, output_format, output_file, generate_remedia
         
         console.print(f"[green]✓[/green] Report saved to: [blue]{output_file}[/blue]")
     except Exception as e:
+        import traceback
         console.print(f"[red]Error generating report: {e}[/red]")
+        console.print(f"[red]{traceback.format_exc()}[/red]")
         sys.exit(1)
     
     # Generate remediation scripts if requested

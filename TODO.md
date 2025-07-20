@@ -56,6 +56,20 @@
 - [x] Set up pytest infrastructure with coverage reporting
 - [x] Add testing documentation and guidelines
 
+### Version 1.6.0 (July 19, 2025)
+- [x] Add CSV export format for findings
+- [x] Implement compliance percentage scoring
+- [x] Add risk level assessments
+- [x] Create unit tests for report generator
+
+### Version 1.7.0 (July 20, 2025)
+- [x] Implement Executive Dashboard with visual security scoring
+- [x] Add interactive charts for findings visualization
+- [x] Create remediation priority matrix
+- [x] Add dashboard CLI integration with --generate-dashboard flag
+- [x] Implement responsive design with AWS theming
+- [x] Fix Jinja2 template issues with built-in filters
+
 ## In Progress 🚧
 - [ ] Add integration tests for multi-service scanning
 
@@ -65,11 +79,12 @@
 
 ### Core Features
 
-- [ ] **Reporting Enhancements**
-  - [ ] Executive summary dashboard
+- [x] **Reporting Enhancements**
+  - [x] Executive summary dashboard
+  - [x] Compliance percentage scoring
+  - [x] Export to CSV format
   - [ ] Trend analysis over time
-  - [ ] Compliance percentage scoring
-  - [ ] Export to CSV format
+  - [ ] Historical scan comparison
 
 ## Medium Priority Tasks 🟡
 
@@ -121,7 +136,7 @@
   - [ ] SNS integration
 
 ### UI/UX Improvements
-- [ ] **Web Dashboard**
+- [x] **Web Dashboard** (Executive Dashboard implemented)
   - [ ] Real-time scan monitoring
   - [ ] Finding management interface
   - [ ] Remediation tracking
@@ -170,4 +185,4 @@
 
 ---
 
-*Last Updated: July 19, 2025*
+*Last Updated: July 20, 2025*

@@ -5,6 +5,29 @@ All notable changes to the AWS Security Analysis Tool will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2025-07-20
+
+### Added
+- **Executive Dashboard**: Interactive HTML dashboard for security findings visualization
+  - Overall security score calculation (A-F grading)
+  - Visual charts using Chart.js (severity distribution, compliance by category, findings by service)
+  - Key metrics display (total findings, attack surface, quick wins)
+  - Top security risks listing
+  - Remediation priority matrix with automation indicators
+  - Responsive design for mobile and desktop viewing
+  - AWS-themed styling
+- **Dashboard CLI Integration**: New `--generate-dashboard` option for creating executive dashboards
+  - Generates interactive HTML dashboards alongside regular reports
+  - Integrates with existing report generation workflow
+
+### Changed
+- Updated CLI to support dashboard generation with `--generate-dashboard` flag
+- Enhanced report generators module to include DashboardGenerator
+
+### Fixed
+- Dashboard generation template issues with Jinja2 filters
+- Template attribute conflicts by using bracket notation for dictionary access
+
 ## [1.6.0] - 2025-07-19
 
 ### Added
@@ -202,11 +225,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Roadmap
 
 ### Planned Features
-- **RDS Security Scanner**: Database encryption, backups, public access
 - **Lambda Security Scanner**: Function policies, environment variables
 - **CloudTrail Scanner**: Logging configuration, event analysis
 - **Scheduled Scanning**: Automated periodic scans
-- **Dashboard UI**: Web-based interface for reports
+- **Web UI**: Full web-based interface for managing scans and viewing reports
 - **Integration**: CI/CD pipeline support, SIEM integration
 - **Container Security**: ECS/EKS security analysis
-- **Cost Optimization**: Security-related cost recommendations
+- **Cost Optimization**: Enhanced security-related cost recommendations
+- **Trend Analysis**: Historical scan comparison and trend tracking

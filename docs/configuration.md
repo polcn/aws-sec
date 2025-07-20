@@ -17,12 +17,12 @@ Configuration files allow you to:
 
 1. Generate an example configuration file:
 ```bash
-aws-security-tool generate-config
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli generate-config
 ```
 
 2. Use the configuration file:
 ```bash
-aws-security-tool scan --config aws-security-config.example.yaml
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --config aws-security-config.example.yaml
 ```
 
 ## Configuration File Location
@@ -102,6 +102,10 @@ output:
     - "S3 Bucket Using SSE-S3 Instead of SSE-KMS"
     - "VPC Missing Recommended Endpoints"
   group_by: severity  # Options: severity, service, resource, compliance
+  
+  # Dashboard generation (separate from report format)
+  generate_dashboard: true
+  dashboard_file: security-dashboard.html
 ```
 
 ### Compliance Configuration
@@ -170,13 +174,16 @@ CLI options take precedence over configuration file settings:
 
 ```bash
 # Override services from config
-aws-security-tool scan --config config.yaml --services iam,s3
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --config config.yaml --services iam,s3
 
 # Override output format
-aws-security-tool scan --config config.yaml --output-format json
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --config config.yaml --output-format json
 
 # Override output file
-aws-security-tool scan --config config.yaml --output-file custom-report.md
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --config config.yaml --output-file custom-report.md
+
+# Generate dashboard alongside report
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --config config.yaml --generate-dashboard
 ```
 
 ## Example Use Cases
@@ -295,7 +302,7 @@ If your configuration file isn't being loaded:
 The tool validates configuration values. Common errors:
 - Invalid region names
 - Invalid severity values (must be CRITICAL, HIGH, MEDIUM, LOW, or INFORMATIONAL)
-- Invalid output format (must be markdown, html, json, or text)
+- Invalid output format (must be markdown, html, json, text, or csv)
 
 ### Finding Names for Suppression
 
