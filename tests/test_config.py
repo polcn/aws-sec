@@ -23,7 +23,7 @@ class TestConfigManager:
         assert config.services['s3'].enabled is True
         assert config.services['ec2'].enabled is True
         assert config.services['vpc'].enabled is True
-        assert config.services['rds'].enabled is False
+        assert config.services['rds'].enabled is True
         
     def test_load_config_from_file(self):
         """Test loading configuration from YAML file."""
@@ -216,8 +216,9 @@ class TestScanConfig:
         assert 's3' in config.services
         assert 'ec2' in config.services
         assert 'vpc' in config.services
+        assert 'rds' in config.services
         assert config.services['iam'].enabled is True
-        assert config.services['rds'].enabled is False
+        assert config.services['rds'].enabled is True
         
     def test_scan_metadata(self):
         """Test scan metadata configuration."""
