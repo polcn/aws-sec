@@ -70,13 +70,13 @@ pip install aws-security-tool  # Note: Has import issues, use source method
 # Activate virtual environment first
 source venv/bin/activate
 
-# Run a security scan on your AWS account (IAM + S3 + EC2 + VPC + RDS by default)
+# Run a security scan on your AWS account (IAM + S3 + EC2 + VPC + RDS + Lambda by default)
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan
 
 # Scan specific services
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services iam
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services s3
-PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services iam,s3,ec2,vpc,rds
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services iam,s3,ec2,vpc,rds,lambda
 
 # Use a configuration file
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --config aws-security-config.yaml
@@ -109,9 +109,22 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli list-services
 ## Known Issues
 
 1. **Import Structure**: The package has relative import issues preventing the installed command from working properly. Use the source method with PYTHONPATH as shown above.
-2. **Limited Scanner Coverage**: Currently IAM, S3, EC2, VPC, and RDS scanning are implemented. Additional service scanners (Lambda, CloudTrail, etc.) are planned.
+2. **Limited Scanner Coverage**: Currently IAM, S3, EC2, VPC, RDS, and Lambda scanning are implemented. Additional service scanners (CloudTrail, etc.) are planned.
 
-## Recent Updates (July 20, 2025)
+## Recent Updates (July 21, 2025)
+
+### Version 1.8.0
+- **Added Lambda Security Scanner**: Comprehensive serverless function security analysis
+  - Function policy checks for public access
+  - Environment variable secret detection
+  - KMS encryption verification
+  - Function URL authentication checks
+  - VPC configuration analysis
+  - Runtime deprecation detection
+  - Dead letter queue configuration
+  - X-Ray tracing enablement
+- **Lambda Scanner Test Coverage**: Full test suite with 96% coverage
+- **Default Service Update**: Lambda scanner now enabled by default
 
 ### Version 1.7.0
 - **Added Executive Dashboard**: Interactive HTML dashboard with security visualization
@@ -194,8 +207,9 @@ Current test coverage:
 - EC2 Scanner: 76% coverage with 8 unit tests
 - VPC Scanner: 77% coverage with 13 unit tests
 - RDS Scanner: 18 unit tests
+- Lambda Scanner: 96% coverage with 21 unit tests
 - Configuration: 91% coverage with 18 unit tests
-- Overall: 80 total tests
+- Overall: 101 total tests
 
 See [tests/README.md](./tests/README.md) for detailed testing information.
 

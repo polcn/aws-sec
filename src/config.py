@@ -101,7 +101,7 @@ class ScanConfig(BaseModel):
             'ec2': {'enabled': True},
             'vpc': {'enabled': True},
             'rds': {'enabled': True},
-            'lambda': {'enabled': False},
+            'lambda': {'enabled': True},
             'cloudtrail': {'enabled': False},
         }
         

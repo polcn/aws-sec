@@ -70,6 +70,19 @@
 - [x] Implement responsive design with AWS theming
 - [x] Fix Jinja2 template issues with built-in filters
 
+### Version 1.8.0 (July 21, 2025)
+- [x] Implement Lambda Security Scanner
+- [x] Add function policy security checks
+- [x] Add environment variable secret detection
+- [x] Add KMS encryption verification
+- [x] Add function URL authentication checks
+- [x] Add VPC configuration analysis
+- [x] Add runtime deprecation detection
+- [x] Add dead letter queue configuration checks
+- [x] Add X-Ray tracing enablement checks
+- [x] Create comprehensive unit tests (21 tests, 96% coverage)
+- [x] Enable Lambda scanner by default
+
 ## In Progress 🚧
 - [ ] Add integration tests for multi-service scanning
 
@@ -89,11 +102,6 @@
 ## Medium Priority Tasks 🟡
 
 ### Additional Scanners
-- [ ] **Lambda Security Scanner**
-  - [ ] Function policies
-  - [ ] Environment variable secrets
-  - [ ] Dead letter queue configuration
-  - [ ] VPC configuration
 
 - [ ] **CloudTrail Scanner**
   - [ ] Trail configuration
@@ -185,4 +193,4 @@
 
 ---
 
-*Last Updated: July 20, 2025*
+*Last Updated: July 21, 2025*

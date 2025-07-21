@@ -5,6 +5,29 @@ All notable changes to the AWS Security Analysis Tool will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2025-07-21
+
+### Added
+- **Lambda Security Scanner**: Comprehensive serverless function security analysis
+  - Function policy checks for public access and overly permissive permissions
+  - Environment variable secret detection with pattern matching
+  - KMS encryption verification for function code and variables
+  - Function URL authentication checks
+  - VPC configuration analysis
+  - Runtime deprecation detection for unsupported versions
+  - Dead letter queue configuration validation
+  - X-Ray tracing enablement checks
+- **Lambda Scanner Test Suite**: Comprehensive unit tests with 96% coverage
+  - 21 unit tests covering all security checks
+  - Mock-based testing for AWS API interactions
+  - Edge case handling and error scenarios
+
+### Changed
+- Updated default service configuration to include Lambda scanner (enabled by default)
+- Enhanced CLI to support Lambda scanning with `--services lambda` option
+- Updated documentation to reflect Lambda scanner capabilities
+- Increased overall test count to 101 tests
+
 ## [1.7.0] - 2025-07-20
 
 ### Added
