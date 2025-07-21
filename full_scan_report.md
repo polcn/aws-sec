@@ -1,27 +1,27 @@
 # AWS Security Analysis Report
 
-**Generated:** 2025-07-19 16:34:15 UTC
+**Generated:** 2025-07-21 13:34:22 UTC
 **Account ID:** 028358929215
 **Regions:** 
-**Services:** iam, s3
+**Services:** iam, s3, ec2, vpc, rds, lambda
 
 ## Executive Summary
 
-- **Total Findings:** 129
+- **Total Findings:** 321
 - **Critical:** 1
-- **High:** 18
-- **Medium:** 61
-- **Low:** 49
+- **High:** 44
+- **Medium:** 89
+- **Low:** 187
 - **Informational:** 0
-- **Resources Scanned:** 129
-- **Scan Duration:** 7 seconds
+- **Resources Scanned:** 321
+- **Scan Duration:** 102 seconds
 
 ## Attack Surface Analysis
 
-- **Total Attack Vectors:** 129
+- **Total Attack Vectors:** 321
 - **Critical Exposures:** 1
-- **Categories Affected:** 5
-- **Services Affected:** 2
+- **Categories Affected:** 9
+- **Services Affected:** 3
 
 ### Top Security Risks
 
@@ -86,7 +86,7 @@ These findings have automated remediation available and should be addressed firs
 
 ---
 
-### HIGH Severity (18 findings)
+### HIGH Severity (44 findings)
 
 #### User with Administrative Privileges
 
@@ -258,9 +258,9 @@ These findings have automated remediation available and should be addressed firs
 
 ---
 
-*... and 8 more HIGH findings*
+*... and 34 more HIGH findings*
 
-### MEDIUM Severity (61 findings)
+### MEDIUM Severity (89 findings)
 
 #### Unused IAM User
 
@@ -450,9 +450,9 @@ These findings have automated remediation available and should be addressed firs
 
 ---
 
-*... and 51 more MEDIUM findings*
+*... and 79 more MEDIUM findings*
 
-### LOW Severity (49 findings)
+### LOW Severity (187 findings)
 
 #### Insufficient Password Reuse Prevention
 
@@ -636,27 +636,50 @@ These findings have automated remediation available and should be addressed firs
 
 ---
 
-*... and 39 more LOW findings*
+*... and 177 more LOW findings*
 
 ## Compliance Framework Summary
 
-### NIST
-- Total Findings: 101
-- CRITICAL: 1
-- MEDIUM: 61
-- HIGH: 18
-- LOW: 21
+| Framework | Compliance % | Risk Level | Findings | Weighted Impact |
+|-----------|--------------|------------|----------|----------------|
+| CIS | 62.1% | High | 61 | 37.9 |
+| NIST | 29.9% | Critical | 129 | 70.1 |
+| OWASP | 100.0% | Low | 0 | 0.0 |
+| SOX | 67.1% | High | 82 | 32.9 |
 
-### CIS
-- Total Findings: 35
-- CRITICAL: 1
-- MEDIUM: 30
-- HIGH: 4
+### CIS Details
+- **Compliance Score:** 62.1%
+- **Risk Level:** High
+- **Total Findings:** 61
+- **Estimated Checks:** 100
+- **Estimated Passes:** 39
+- **Severity Breakdown:**
+  - CRITICAL: 1
+  - MEDIUM: 37
+  - HIGH: 23
 
-### SOX
-- Total Findings: 81
-- LOW: 28
-- MEDIUM: 53
+### NIST Details
+- **Compliance Score:** 29.9%
+- **Risk Level:** Critical
+- **Total Findings:** 129
+- **Estimated Checks:** 100
+- **Estimated Passes:** 0
+- **Severity Breakdown:**
+  - CRITICAL: 1
+  - MEDIUM: 69
+  - HIGH: 38
+  - LOW: 21
+
+### SOX Details
+- **Compliance Score:** 67.1%
+- **Risk Level:** High
+- **Total Findings:** 82
+- **Estimated Checks:** 100
+- **Estimated Passes:** 18
+- **Severity Breakdown:**
+  - LOW: 28
+  - MEDIUM: 53
+  - HIGH: 1
 
 ## Remediation Priority Matrix
 
@@ -669,21 +692,21 @@ These findings have automated remediation available and should be addressed firs
 
 ### High Priority
 - **Risk Score Range:** 70-89
-- **Total Findings:** 18
+- **Total Findings:** 44
 - **Automated Remediation:** 2
-- **Manual Remediation:** 16
-- **Estimated Effort:** Medium (2-5 days)
+- **Manual Remediation:** 42
+- **Estimated Effort:** High (1-2 weeks)
 
 ### Medium Priority
 - **Risk Score Range:** 50-69
-- **Total Findings:** 61
+- **Total Findings:** 89
 - **Automated Remediation:** 60
-- **Manual Remediation:** 1
+- **Manual Remediation:** 29
 - **Estimated Effort:** Very High (> 2 weeks)
 
 ### Low Priority
 - **Risk Score Range:** 30-49
-- **Total Findings:** 49
+- **Total Findings:** 187
 - **Automated Remediation:** 29
-- **Manual Remediation:** 20
-- **Estimated Effort:** Medium (3-5 days)
+- **Manual Remediation:** 158
+- **Estimated Effort:** Very High (> 2 weeks)
