@@ -5,6 +5,40 @@ All notable changes to the AWS Security Analysis Tool will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2025-07-22
+
+### Added
+- **Cost Monitoring and Optimization Scanner**: Comprehensive AWS cost analysis
+  - AWS Cost Explorer API integration for spending analysis
+  - Reserved Instance and Savings Plans coverage/utilization tracking
+  - Resource utilization monitoring for EC2, RDS, and EBS
+  - Cost anomaly detection and month-over-month growth alerts
+  - Untagged resource identification for cost allocation
+  - Service-level cost spike detection (>50% growth triggers)
+  - Underutilized resource identification (CPU <10%)
+- **Enhanced Cost Dashboard**: Cost analysis section in executive dashboard
+  - Total potential monthly savings calculation
+  - Cost findings breakdown by service with charts
+  - Top cost optimization opportunities listing
+  - Interactive visualizations using Chart.js
+- **Integrated Cost Checks**: Added to existing scanners
+  - EC2: Stopped instances with EBS volumes, previous generation instances
+  - S3: Storage class analytics, intelligent tiering, incomplete multipart uploads
+- **Comprehensive Scan Results**: 390 total findings across all services
+  - Unified reporting combining security and cost analysis
+  - Replaced separate scan reports with comprehensive ones
+
+### Changed
+- Updated dashboard generator to support cost analysis visualization
+- Enhanced Finding model to use evidence dict for cost_impact data
+- Modified EC2 and S3 scanners to include cost optimization checks
+- Default configuration now includes cost service (disabled by default)
+
+### Fixed
+- Finding model compatibility with cost_impact data storage
+- Dashboard generator to extract cost data from evidence dict
+- Cost scanner abstract method implementation
+
 ## [1.8.0] - 2025-07-21
 
 ### Added
@@ -254,5 +288,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Web UI**: Full web-based interface for managing scans and viewing reports
 - **Integration**: CI/CD pipeline support, SIEM integration
 - **Container Security**: ECS/EKS security analysis
-- **Cost Optimization**: Enhanced security-related cost recommendations
+- **Cost Optimization**: ✅ COMPLETED - Enhanced security-related cost recommendations
 - **Trend Analysis**: Historical scan comparison and trend tracking

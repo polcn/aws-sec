@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="aws-security-tool",
-    version="1.0.0",
+    version="1.9.0",
     author="AWS Security Tool Team",
     description="Comprehensive AWS security analysis tool",
     long_description=long_description,
