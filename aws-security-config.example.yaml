@@ -24,6 +24,32 @@ services:
     enabled: false
   cost:
     enabled: true
+    # Cost analysis thresholds
+    cost_increase_threshold: 20      # Alert on >20% month-over-month increase
+    service_spike_threshold: 50      # Alert on >50% service cost increase
+    
+    # Reserved Instance and Savings Plans thresholds
+    ri_coverage_threshold: 70        # Alert when RI coverage <70%
+    ri_utilization_threshold: 80     # Alert when RI utilization <80%
+    sp_coverage_threshold: 60        # Alert when Savings Plans coverage <60%
+    
+    # Resource utilization thresholds
+    ec2_cpu_low_threshold: 10        # Flag as underutilized when CPU <10%
+    ec2_cpu_high_threshold: 90       # Flag as overutilized when CPU >90%
+    rds_cpu_threshold: 20            # RDS underutilization threshold
+    lambda_memory_threshold: 512     # Flag Lambda functions with >512MB as candidates for optimization
+    
+    # Cost thresholds for specific services
+    nat_gateway_cost_threshold: 100  # Alert when NAT Gateway costs >$100/month
+    cross_az_transfer_threshold: 50  # Alert on cross-AZ transfer costs >$50/month
+    inter_region_transfer_threshold: 100  # Alert on inter-region transfer >$100/month
+    s3_request_cost_threshold: 50    # Alert on S3 request costs >$50/month
+    
+    # Feature toggles for specific checks
+    check_spot_opportunities: true   # Enable Spot instance opportunity detection
+    check_container_costs: true      # Enable ECS/Fargate/EKS cost analysis
+    check_idle_resources: true       # Enable idle resource detection (SageMaker, etc.)
+    enable_cost_forecast: true       # Enable cost forecasting
 risk_scoring:
   critical_weight: 100
   high_weight: 80

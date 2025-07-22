@@ -5,6 +5,40 @@ All notable changes to the AWS Security Analysis Tool will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2025-07-22
+
+### Added
+- **Enhanced Cost Analysis Features**:
+  - NAT Gateway cost analysis with optimization recommendations
+  - Data transfer cost monitoring (cross-AZ, inter-region)
+  - Elastic IP waste detection for unattached addresses
+  - Lambda function memory optimization analysis
+  - S3 request pattern cost analysis
+  - CloudWatch Logs retention policy optimization
+  - Cost forecasting with trend predictions
+  - ECS/Fargate cost optimization with Spot recommendations
+  - EKS control plane cost monitoring
+  - Spot instance opportunity identification
+  - DynamoDB billing mode optimization
+  - ElastiCache reserved node coverage analysis
+  - Redshift cluster pause recommendations
+  - SageMaker notebook idle detection
+
+### Enhanced
+- **Cost Dashboard**: New multi-tab interface with:
+  - Overview tab with cost distribution and trends
+  - Compute optimization visualizations
+  - Storage and transfer cost breakdowns
+  - Service-specific recommendations
+  - Cost forecasting charts
+  - Quick wins identification
+
+### Improved
+- Added more granular cost impact calculations
+- Enhanced finding evidence with detailed cost breakdowns
+- Better categorization of cost optimization opportunities
+- Added test script for validating all cost analysis features
+
 ## [1.9.0] - 2025-07-22
 
 ### Added

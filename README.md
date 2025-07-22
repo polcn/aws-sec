@@ -15,11 +15,28 @@ A comprehensive, open-source AWS security analysis tool that performs automated 
 - **VPC Security Analysis**: Flow logs, endpoints, peering, NAT gateways, route tables, and network configuration
 - **RDS Security Analysis**: Database encryption, backups, public access, Multi-AZ, deletion protection, and parameter security
 - **Lambda Security Analysis**: Function security, environment variables, permissions, and configuration
-- **Cost Monitoring**: Track AWS spending trends, Reserved Instance coverage, Savings Plans utilization, and resource optimization
+- **Enhanced Cost Analysis**: 
+  - Track AWS spending trends and forecast future costs
+  - Reserved Instance and Savings Plans coverage analysis
+  - Resource utilization monitoring (EC2, RDS, Lambda, EBS)
+  - NAT Gateway and data transfer cost optimization
+  - Elastic IP waste detection
+  - S3 request pattern analysis
+  - CloudWatch Logs retention optimization
+  - Container cost analysis (ECS, Fargate, EKS)
+  - Spot instance opportunity identification
+  - Service-specific optimizations (DynamoDB, ElastiCache, Redshift, SageMaker)
+  - Cost anomaly detection and alerting
 - **Architecture Diagram Generation**: Auto-generate visual representation of AWS infrastructure
 - **Compliance Framework Mapping**: Map findings to NIST, CIS, SOX, and OWASP frameworks with percentage scoring
 - **Multi-Format Reporting**: Generate reports in HTML, Markdown, JSON, CSV, and plain text formats
 - **Executive Dashboard**: Interactive HTML dashboard with security score, cost analysis, charts, and remediation priorities
+- **Enhanced Cost Dashboard**: Advanced cost visualization with:
+  - Multi-tab interface for different cost perspectives
+  - Cost forecasting and trend analysis
+  - Service-specific optimization recommendations
+  - Interactive charts for resource utilization
+  - Quick wins and top opportunities identification
 - **Compliance Percentage Scoring**: Calculate weighted compliance scores for each framework with risk assessments
 
 ## Latest Scan Results
@@ -92,6 +109,12 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services iam,s3,ec2,v
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services cost
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services cost,ec2,s3 --output-format dashboard
 
+# Generate enhanced cost dashboard
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services cost --output-format html --output-file enhanced-cost-dashboard.html
+
+# Test enhanced cost scanner features
+PYTHONPATH=/home/ec2-user/aws-sec python test_enhanced_cost_scanner.py
+
 # Use a configuration file
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --config aws-security-config.yaml
 
@@ -128,19 +151,43 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli list-services
 ## Recent Updates (July 22, 2025)
 
 ### Version 1.9.0
-- **Added Cost Monitoring and Optimization**: Comprehensive AWS cost analysis and savings recommendations
-  - Cost Explorer API integration for spending trend analysis
-  - Reserved Instance and Savings Plans coverage analysis
-  - Resource utilization monitoring (EC2, RDS, EBS)
-  - Cost anomaly detection
-  - Untagged resource identification for cost allocation
-  - Interactive cost dashboard with potential savings visualization
-  - Added cost optimization findings to existing EC2 and S3 scanners
-- **Enhanced Dashboard**: Added cost analysis section to executive dashboard
-  - Total potential savings display
-  - Cost findings by service breakdown
-  - Top cost optimization opportunities
-  - Visual charts for savings by service
+- **Enhanced Cost Analysis Features**: Comprehensive AWS cost optimization with advanced analytics
+  - **Core Cost Analysis**:
+    - Cost Explorer API integration for spending trend analysis
+    - Reserved Instance and Savings Plans coverage monitoring
+    - Cost anomaly detection with configurable thresholds
+    - Cost forecasting for budget planning
+  - **Resource Optimization**:
+    - EC2 utilization analysis with CPU and memory metrics
+    - RDS instance rightsizing recommendations
+    - Lambda function memory optimization
+    - EBS volume utilization and unattached volume detection
+  - **Network Cost Optimization**:
+    - NAT Gateway cost analysis and alternatives
+    - Data transfer costs (cross-AZ, inter-region)
+    - Elastic IP waste detection
+  - **Storage Optimization**:
+    - S3 request pattern analysis for cost reduction
+    - CloudWatch Logs retention policy optimization
+    - Intelligent tiering recommendations
+  - **Container Services**:
+    - ECS/Fargate cost optimization with Spot recommendations
+    - EKS control plane cost analysis
+  - **Service-Specific Analysis**:
+    - DynamoDB on-demand vs provisioned capacity
+    - ElastiCache reserved node coverage
+    - Redshift cluster pause opportunities
+    - SageMaker notebook idle detection
+  - **Spot Instance Opportunities**:
+    - Automated identification of Spot-suitable workloads
+    - Potential savings calculations
+- **Enhanced Cost Dashboard**: Multi-tab interface with advanced visualizations
+  - Overview tab with cost distribution and trends
+  - Compute optimization with utilization charts
+  - Storage and transfer cost breakdowns
+  - Service-specific optimization recommendations
+  - Cost forecasting and budget tracking
+  - Quick wins identification for immediate savings
 
 ### Version 1.8.0
 - **Added Lambda Security Scanner**: Comprehensive serverless function security analysis
