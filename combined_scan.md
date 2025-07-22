@@ -1,27 +1,27 @@
 # AWS Security Analysis Report
 
-**Generated:** 2025-07-21 13:34:22 UTC
+**Generated:** 2025-07-22 16:10:00 UTC
 **Account ID:** 028358929215
 **Regions:** 
-**Services:** iam, s3, ec2, vpc, rds, lambda
+**Services:** iam, s3, ec2, vpc, rds, lambda, cost
 
 ## Executive Summary
 
-- **Total Findings:** 321
+- **Total Findings:** 390
 - **Critical:** 1
-- **High:** 44
-- **Medium:** 89
-- **Low:** 187
-- **Informational:** 0
-- **Resources Scanned:** 321
-- **Scan Duration:** 102 seconds
+- **High:** 47
+- **Medium:** 97
+- **Low:** 216
+- **Informational:** 29
+- **Resources Scanned:** 390
+- **Scan Duration:** 115 seconds
 
 ## Attack Surface Analysis
 
-- **Total Attack Vectors:** 321
+- **Total Attack Vectors:** 390
 - **Critical Exposures:** 1
 - **Categories Affected:** 9
-- **Services Affected:** 3
+- **Services Affected:** 9
 
 ### Top Security Risks
 
@@ -86,7 +86,7 @@ These findings have automated remediation available and should be addressed firs
 
 ---
 
-### HIGH Severity (44 findings)
+### HIGH Severity (47 findings)
 
 #### User with Administrative Privileges
 
@@ -258,9 +258,9 @@ These findings have automated remediation available and should be addressed firs
 
 ---
 
-*... and 34 more HIGH findings*
+*... and 37 more HIGH findings*
 
-### MEDIUM Severity (89 findings)
+### MEDIUM Severity (97 findings)
 
 #### Unused IAM User
 
@@ -450,9 +450,9 @@ These findings have automated remediation available and should be addressed firs
 
 ---
 
-*... and 79 more MEDIUM findings*
+*... and 87 more MEDIUM findings*
 
-### LOW Severity (187 findings)
+### LOW Severity (216 findings)
 
 #### Insufficient Password Reuse Prevention
 
@@ -509,6 +509,25 @@ These findings have automated remediation available and should be addressed firs
 
 ---
 
+#### S3 Bucket Without Storage Class Analytics
+
+- **Resource Type:** AWS::S3::Bucket
+- **Resource ID:** `amazon-connect-4217f28bf497`
+- **Region:** us-east-1
+- **Risk Score:** 30
+
+**Description:** S3 bucket 'amazon-connect-4217f28bf497' does not have storage class analytics configured.
+
+**Impact:** Cannot analyze access patterns to optimize storage costs.
+
+**Recommendation:** Enable storage class analytics to identify infrequently accessed objects for cost optimization.
+
+**Compliance Frameworks:** NIST
+
+✅ **Automated remediation available**
+
+---
+
 #### S3 Bucket Using SSE-S3 Instead of SSE-KMS
 
 - **Resource Type:** AWS::S3::Bucket
@@ -542,6 +561,25 @@ These findings have automated remediation available and should be addressed firs
 **Recommendation:** Configure lifecycle policies to automatically transition or expire objects based on age.
 
 **Compliance Frameworks:** NIST
+
+---
+
+#### S3 Bucket Without Storage Class Analytics
+
+- **Resource Type:** AWS::S3::Bucket
+- **Resource ID:** `bill-basic-dev-serverlessdeploymentbucket-uypet4cjt9ld`
+- **Region:** us-east-1
+- **Risk Score:** 30
+
+**Description:** S3 bucket 'bill-basic-dev-serverlessdeploymentbucket-uypet4cjt9ld' does not have storage class analytics configured.
+
+**Impact:** Cannot analyze access patterns to optimize storage costs.
+
+**Recommendation:** Enable storage class analytics to identify infrequently accessed objects for cost optimization.
+
+**Compliance Frameworks:** NIST
+
+✅ **Automated remediation available**
 
 ---
 
@@ -581,69 +619,227 @@ These findings have automated remediation available and should be addressed firs
 
 ---
 
-#### S3 Bucket Using SSE-S3 Instead of SSE-KMS
+#### S3 Bucket Without Storage Class Analytics
 
 - **Resource Type:** AWS::S3::Bucket
-- **Resource ID:** `bill-finance-minimal-dev-serverlessdeploymentbucke-ka5o2ewzdxid`
+- **Resource ID:** `bill-csv-uploads-1750517575`
 - **Region:** us-east-1
 - **Risk Score:** 30
 
-**Description:** S3 bucket 'bill-finance-minimal-dev-serverlessdeploymentbucke-ka5o2ewzdxid' uses SSE-S3 encryption instead of SSE-KMS.
+**Description:** S3 bucket 'bill-csv-uploads-1750517575' does not have storage class analytics configured.
 
-**Impact:** SSE-S3 provides encryption but lacks the additional key management features and audit trail of KMS.
+**Impact:** Cannot analyze access patterns to optimize storage costs.
 
-**Recommendation:** Consider using SSE-KMS for enhanced security and compliance requirements.
+**Recommendation:** Enable storage class analytics to identify infrequently accessed objects for cost optimization.
 
-**Compliance Frameworks:** SOX
+**Compliance Frameworks:** NIST
 
 ✅ **Automated remediation available**
 
 ---
 
-#### S3 Bucket Without Lifecycle Policy
+*... and 206 more LOW findings*
+
+### INFO Severity (29 findings)
+
+#### S3 Bucket Without Request Metrics
+
+- **Resource Type:** AWS::S3::Bucket
+- **Resource ID:** `amazon-connect-4217f28bf497`
+- **Region:** us-east-1
+- **Risk Score:** 10
+
+**Description:** S3 bucket 'amazon-connect-4217f28bf497' does not have request metrics configured.
+
+**Impact:** Cannot analyze request patterns to optimize data transfer costs.
+
+**Recommendation:** Enable request metrics to understand access patterns and optimize costs.
+
+**Compliance Frameworks:** NIST
+
+✅ **Automated remediation available**
+
+---
+
+#### S3 Bucket Without Request Metrics
+
+- **Resource Type:** AWS::S3::Bucket
+- **Resource ID:** `bill-basic-dev-serverlessdeploymentbucket-uypet4cjt9ld`
+- **Region:** us-east-1
+- **Risk Score:** 10
+
+**Description:** S3 bucket 'bill-basic-dev-serverlessdeploymentbucket-uypet4cjt9ld' does not have request metrics configured.
+
+**Impact:** Cannot analyze request patterns to optimize data transfer costs.
+
+**Recommendation:** Enable request metrics to understand access patterns and optimize costs.
+
+**Compliance Frameworks:** NIST
+
+✅ **Automated remediation available**
+
+---
+
+#### S3 Bucket Without Request Metrics
+
+- **Resource Type:** AWS::S3::Bucket
+- **Resource ID:** `bill-csv-uploads-1750517575`
+- **Region:** us-east-1
+- **Risk Score:** 10
+
+**Description:** S3 bucket 'bill-csv-uploads-1750517575' does not have request metrics configured.
+
+**Impact:** Cannot analyze request patterns to optimize data transfer costs.
+
+**Recommendation:** Enable request metrics to understand access patterns and optimize costs.
+
+**Compliance Frameworks:** NIST
+
+✅ **Automated remediation available**
+
+---
+
+#### S3 Bucket Without Request Metrics
 
 - **Resource Type:** AWS::S3::Bucket
 - **Resource ID:** `bill-finance-minimal-dev-serverlessdeploymentbucke-ka5o2ewzdxid`
 - **Region:** us-east-1
-- **Risk Score:** 30
+- **Risk Score:** 10
 
-**Description:** S3 bucket 'bill-finance-minimal-dev-serverlessdeploymentbucke-ka5o2ewzdxid' does not have lifecycle policies configured.
+**Description:** S3 bucket 'bill-finance-minimal-dev-serverlessdeploymentbucke-ka5o2ewzdxid' does not have request metrics configured.
 
-**Impact:** May result in unnecessary storage costs and retention of outdated data.
+**Impact:** Cannot analyze request patterns to optimize data transfer costs.
 
-**Recommendation:** Configure lifecycle policies to automatically transition or expire objects based on age.
+**Recommendation:** Enable request metrics to understand access patterns and optimize costs.
 
 **Compliance Frameworks:** NIST
 
+✅ **Automated remediation available**
+
 ---
 
-#### S3 Bucket Using SSE-S3 Instead of SSE-KMS
+#### S3 Bucket Without Request Metrics
 
 - **Resource Type:** AWS::S3::Bucket
 - **Resource ID:** `bill-finance-system-dev-serverlessdeploymentbucket-kgisogxazjhy`
 - **Region:** us-east-1
-- **Risk Score:** 30
+- **Risk Score:** 10
 
-**Description:** S3 bucket 'bill-finance-system-dev-serverlessdeploymentbucket-kgisogxazjhy' uses SSE-S3 encryption instead of SSE-KMS.
+**Description:** S3 bucket 'bill-finance-system-dev-serverlessdeploymentbucket-kgisogxazjhy' does not have request metrics configured.
 
-**Impact:** SSE-S3 provides encryption but lacks the additional key management features and audit trail of KMS.
+**Impact:** Cannot analyze request patterns to optimize data transfer costs.
 
-**Recommendation:** Consider using SSE-KMS for enhanced security and compliance requirements.
+**Recommendation:** Enable request metrics to understand access patterns and optimize costs.
 
-**Compliance Frameworks:** SOX
+**Compliance Frameworks:** NIST
 
 ✅ **Automated remediation available**
 
 ---
 
-*... and 177 more LOW findings*
+#### S3 Bucket Without Request Metrics
+
+- **Resource Type:** AWS::S3::Bucket
+- **Resource ID:** `bill-finance-ui-1750520483`
+- **Region:** us-east-1
+- **Risk Score:** 10
+
+**Description:** S3 bucket 'bill-finance-ui-1750520483' does not have request metrics configured.
+
+**Impact:** Cannot analyze request patterns to optimize data transfer costs.
+
+**Recommendation:** Enable request metrics to understand access patterns and optimize costs.
+
+**Compliance Frameworks:** NIST
+
+✅ **Automated remediation available**
+
+---
+
+#### S3 Bucket Without Request Metrics
+
+- **Resource Type:** AWS::S3::Bucket
+- **Resource ID:** `bill-finance-v1-dev-serverlessdeploymentbucket-9ziddxdlrimw`
+- **Region:** us-east-1
+- **Risk Score:** 10
+
+**Description:** S3 bucket 'bill-finance-v1-dev-serverlessdeploymentbucket-9ziddxdlrimw' does not have request metrics configured.
+
+**Impact:** Cannot analyze request patterns to optimize data transfer costs.
+
+**Recommendation:** Enable request metrics to understand access patterns and optimize costs.
+
+**Compliance Frameworks:** NIST
+
+✅ **Automated remediation available**
+
+---
+
+#### S3 Bucket Without Request Metrics
+
+- **Resource Type:** AWS::S3::Bucket
+- **Resource ID:** `bill-financial-management-serverlessdeploymentbuck-dyqphpserkou`
+- **Region:** us-east-1
+- **Risk Score:** 10
+
+**Description:** S3 bucket 'bill-financial-management-serverlessdeploymentbuck-dyqphpserkou' does not have request metrics configured.
+
+**Impact:** Cannot analyze request patterns to optimize data transfer costs.
+
+**Recommendation:** Enable request metrics to understand access patterns and optimize costs.
+
+**Compliance Frameworks:** NIST
+
+✅ **Automated remediation available**
+
+---
+
+#### S3 Bucket Without Request Metrics
+
+- **Resource Type:** AWS::S3::Bucket
+- **Resource ID:** `bill-receipts-1750520483`
+- **Region:** us-east-1
+- **Risk Score:** 10
+
+**Description:** S3 bucket 'bill-receipts-1750520483' does not have request metrics configured.
+
+**Impact:** Cannot analyze request patterns to optimize data transfer costs.
+
+**Recommendation:** Enable request metrics to understand access patterns and optimize costs.
+
+**Compliance Frameworks:** NIST
+
+✅ **Automated remediation available**
+
+---
+
+#### S3 Bucket Without Request Metrics
+
+- **Resource Type:** AWS::S3::Bucket
+- **Resource ID:** `bill-test-dev-serverlessdeploymentbucket-0lkeulsdet28`
+- **Region:** us-east-1
+- **Risk Score:** 10
+
+**Description:** S3 bucket 'bill-test-dev-serverlessdeploymentbucket-0lkeulsdet28' does not have request metrics configured.
+
+**Impact:** Cannot analyze request patterns to optimize data transfer costs.
+
+**Recommendation:** Enable request metrics to understand access patterns and optimize costs.
+
+**Compliance Frameworks:** NIST
+
+✅ **Automated remediation available**
+
+---
+
+*... and 19 more INFO findings*
 
 ## Compliance Framework Summary
 
 | Framework | Compliance % | Risk Level | Findings | Weighted Impact |
 |-----------|--------------|------------|----------|----------------|
 | CIS | 62.1% | High | 61 | 37.9 |
-| NIST | 29.9% | Critical | 129 | 70.1 |
+| NIST | 21.2% | Critical | 187 | 78.8 |
 | OWASP | 100.0% | Low | 0 | 0.0 |
 | SOX | 67.1% | High | 82 | 32.9 |
 
@@ -659,16 +855,17 @@ These findings have automated remediation available and should be addressed firs
   - HIGH: 23
 
 ### NIST Details
-- **Compliance Score:** 29.9%
+- **Compliance Score:** 21.2%
 - **Risk Level:** Critical
-- **Total Findings:** 129
+- **Total Findings:** 187
 - **Estimated Checks:** 100
 - **Estimated Passes:** 0
 - **Severity Breakdown:**
   - CRITICAL: 1
   - MEDIUM: 69
   - HIGH: 38
-  - LOW: 21
+  - LOW: 50
+  - INFO: 29
 
 ### SOX Details
 - **Compliance Score:** 67.1%
@@ -692,21 +889,28 @@ These findings have automated remediation available and should be addressed firs
 
 ### High Priority
 - **Risk Score Range:** 70-89
-- **Total Findings:** 44
+- **Total Findings:** 47
 - **Automated Remediation:** 2
-- **Manual Remediation:** 42
+- **Manual Remediation:** 45
 - **Estimated Effort:** High (1-2 weeks)
 
 ### Medium Priority
 - **Risk Score Range:** 50-69
-- **Total Findings:** 89
+- **Total Findings:** 97
 - **Automated Remediation:** 60
-- **Manual Remediation:** 29
+- **Manual Remediation:** 37
 - **Estimated Effort:** Very High (> 2 weeks)
 
 ### Low Priority
 - **Risk Score Range:** 30-49
-- **Total Findings:** 187
-- **Automated Remediation:** 29
+- **Total Findings:** 216
+- **Automated Remediation:** 58
 - **Manual Remediation:** 158
 - **Estimated Effort:** Very High (> 2 weeks)
+
+### Informational
+- **Risk Score Range:** 0-29
+- **Total Findings:** 29
+- **Automated Remediation:** 29
+- **Manual Remediation:** 0
+- **Estimated Effort:** Medium (3-5 days)

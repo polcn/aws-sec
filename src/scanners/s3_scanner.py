@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional
 import boto3
 from botocore.exceptions import ClientError
@@ -46,6 +46,7 @@ class S3Scanner(BaseScanner):
                 findings.extend(self._check_bucket_policy(regional_s3, bucket_name, bucket_region))
                 findings.extend(self._check_bucket_acl(regional_s3, bucket_name, bucket_region))
                 findings.extend(self._check_object_lock(regional_s3, bucket_name, bucket_region))
+                findings.extend(self._check_bucket_cost_optimization(regional_s3, bucket_name, bucket_region))
                 
         except ClientError as e:
             self._handle_error(e, "S3 scan")
@@ -462,5 +463,178 @@ class S3Scanner(BaseScanner):
                     
         except ClientError as e:
             self._handle_error(e, f"object lock check for bucket {bucket_name}")
+        
+        return findings
+    
+    def _check_bucket_cost_optimization(self, s3_client, bucket_name: str, region: str) -> List[Finding]:
+        """Check for S3 cost optimization opportunities"""
+        findings = []
+        
+        try:
+            # Check storage class analytics
+            try:
+                analytics = s3_client.list_bucket_analytics_configurations(Bucket=bucket_name)
+                has_analytics = len(analytics.get('AnalyticsConfigurationList', [])) > 0
+            except ClientError as e:
+                if e.response['Error']['Code'] == 'NoSuchConfiguration':
+                    has_analytics = False
+                else:
+                    raise
+            
+            if not has_analytics:
+                findings.append(Finding(
+                    severity=Severity.LOW,
+                    category=Category.COST_OPTIMIZATION,
+                    resource_type="AWS::S3::Bucket",
+                    resource_id=bucket_name,
+                    region=region or "global",
+                    account_id=self.account_id,
+                    title="S3 Bucket Without Storage Class Analytics",
+                    description=f"S3 bucket '{bucket_name}' does not have storage class analytics configured.",
+                    impact="Cannot analyze access patterns to optimize storage costs.",
+                    recommendation="Enable storage class analytics to identify infrequently accessed objects for cost optimization.",
+                    compliance_frameworks=[ComplianceFramework.NIST],
+                    automated_remediation_available=True,
+                    evidence={
+                        "bucket_name": bucket_name,
+                        "has_analytics": False
+                    }
+                ))
+            
+            # Check intelligent tiering
+            try:
+                intelligent_tiering = s3_client.list_bucket_intelligent_tiering_configurations(Bucket=bucket_name)
+                has_intelligent_tiering = len(intelligent_tiering.get('IntelligentTieringConfigurationList', [])) > 0
+            except ClientError as e:
+                has_intelligent_tiering = False
+            
+            # Check if bucket has lifecycle policies
+            try:
+                lifecycle = s3_client.get_bucket_lifecycle_configuration(Bucket=bucket_name)
+                has_lifecycle = len(lifecycle.get('Rules', [])) > 0
+            except ClientError as e:
+                has_lifecycle = False
+            
+            # Get bucket size and object count
+            try:
+                # Get bucket metrics
+                cloudwatch = self.session.client('cloudwatch', region_name='us-east-1')
+                
+                # Get bucket size
+                size_response = cloudwatch.get_metric_statistics(
+                    Namespace='AWS/S3',
+                    MetricName='BucketSizeBytes',
+                    Dimensions=[
+                        {'Name': 'BucketName', 'Value': bucket_name},
+                        {'Name': 'StorageType', 'Value': 'StandardStorage'}
+                    ],
+                    StartTime=datetime.utcnow() - timedelta(days=2),
+                    EndTime=datetime.utcnow(),
+                    Period=86400,
+                    Statistics=['Average']
+                )
+                
+                if size_response['Datapoints']:
+                    bucket_size_bytes = size_response['Datapoints'][-1]['Average']
+                    bucket_size_gb = bucket_size_bytes / (1024 ** 3)
+                    
+                    # If bucket is large and doesn't have intelligent tiering, flag it
+                    if bucket_size_gb > 100 and not has_intelligent_tiering and not has_lifecycle:
+                        monthly_cost = bucket_size_gb * 0.023  # Standard storage cost per GB
+                        potential_savings = monthly_cost * 0.3  # Assume 30% savings with optimization
+                        
+                        findings.append(Finding(
+                            severity=Severity.MEDIUM,
+                            category=Category.COST_OPTIMIZATION,
+                            resource_type="AWS::S3::Bucket",
+                            resource_id=bucket_name,
+                            region=region or "global",
+                            account_id=self.account_id,
+                            title="Large S3 Bucket Without Cost Optimization",
+                            description=f"S3 bucket '{bucket_name}' contains {bucket_size_gb:.1f} GB without Intelligent-Tiering or lifecycle policies.",
+                            impact=f"Approximately ${monthly_cost:.2f} per month in storage costs. Potential savings of ${potential_savings:.2f} per month.",
+                            recommendation="Enable S3 Intelligent-Tiering or configure lifecycle policies for automatic cost optimization.",
+                            compliance_frameworks=[ComplianceFramework.NIST],
+                            automated_remediation_available=True,
+                            evidence={
+                                "bucket_name": bucket_name,
+                                "size_gb": bucket_size_gb,
+                                "monthly_cost": f"${monthly_cost:.2f}",
+                                "potential_savings": f"${potential_savings:.2f}"
+                            }
+                        ))
+                
+                # Check for multipart uploads
+                multipart = s3_client.list_multipart_uploads(Bucket=bucket_name)
+                incomplete_uploads = multipart.get('Uploads', [])
+                
+                if incomplete_uploads:
+                    # Calculate age of incomplete uploads
+                    old_uploads = []
+                    for upload in incomplete_uploads:
+                        upload_date = upload['Initiated']
+                        age_days = (datetime.now(upload_date.tzinfo) - upload_date).days
+                        if age_days > 7:
+                            old_uploads.append({
+                                'key': upload['Key'],
+                                'age_days': age_days,
+                                'upload_id': upload['UploadId']
+                            })
+                    
+                    if old_uploads:
+                        findings.append(Finding(
+                            severity=Severity.MEDIUM,
+                            category=Category.COST_OPTIMIZATION,
+                            resource_type="AWS::S3::Bucket",
+                            resource_id=bucket_name,
+                            region=region or "global",
+                            account_id=self.account_id,
+                            title="Incomplete Multipart Uploads",
+                            description=f"S3 bucket '{bucket_name}' has {len(old_uploads)} incomplete multipart uploads older than 7 days.",
+                            impact="Incomplete multipart uploads incur storage charges without providing value.",
+                            recommendation="Configure lifecycle policy to automatically abort incomplete multipart uploads after 7 days.",
+                            compliance_frameworks=[ComplianceFramework.NIST],
+                            automated_remediation_available=True,
+                            evidence={
+                                "bucket_name": bucket_name,
+                                "incomplete_upload_count": len(old_uploads),
+                                "oldest_upload_days": max(u['age_days'] for u in old_uploads),
+                                "sample_uploads": old_uploads[:5]
+                            }
+                        ))
+                        
+            except Exception as e:
+                logger.warning(f"Could not get metrics for bucket {bucket_name}: {str(e)}")
+            
+            # Check request metrics configuration
+            try:
+                request_metrics = s3_client.list_bucket_metrics_configurations(Bucket=bucket_name)
+                has_request_metrics = len(request_metrics.get('MetricsConfigurationList', [])) > 0
+                
+                if not has_request_metrics:
+                    findings.append(Finding(
+                        severity=Severity.INFO,
+                        category=Category.COST_OPTIMIZATION,
+                        resource_type="AWS::S3::Bucket",
+                        resource_id=bucket_name,
+                        region=region or "global",
+                        account_id=self.account_id,
+                        title="S3 Bucket Without Request Metrics",
+                        description=f"S3 bucket '{bucket_name}' does not have request metrics configured.",
+                        impact="Cannot analyze request patterns to optimize data transfer costs.",
+                        recommendation="Enable request metrics to understand access patterns and optimize costs.",
+                        compliance_frameworks=[ComplianceFramework.NIST],
+                        automated_remediation_available=True,
+                        evidence={
+                            "bucket_name": bucket_name,
+                            "has_request_metrics": False
+                        }
+                    ))
+                    
+            except ClientError as e:
+                logger.warning(f"Could not check request metrics for bucket {bucket_name}: {str(e)}")
+                
+        except ClientError as e:
+            self._handle_error(e, f"cost optimization check for bucket {bucket_name}")
         
         return findings

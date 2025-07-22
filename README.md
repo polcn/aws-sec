@@ -4,8 +4,9 @@ A comprehensive, open-source AWS security analysis tool that performs automated 
 
 ## Features
 
-- **Multi-Service Security Scanning**: Support for IAM, S3, EC2, VPC, and RDS with more services coming soon
+- **Multi-Service Security Scanning**: Support for IAM, S3, EC2, VPC, RDS, Lambda, and Cost Explorer
 - **Security Findings with Risk Prioritization**: Comprehensive scanning aligned with AWS Well-Architected Security Pillar
+- **Cost Optimization Analysis**: Identify cost-saving opportunities, underutilized resources, and spending anomalies
 - **Automated Remediation Scripts**: Generate executable Python scripts to fix identified issues
 - **Configuration File Support**: Customize scan behavior, suppress findings, and override severities
 - **IAM Security Analysis**: Deep analysis including MFA enforcement validation
@@ -13,32 +14,41 @@ A comprehensive, open-source AWS security analysis tool that performs automated 
 - **EC2 Security Analysis**: Instance security, security groups, EBS encryption, network ACLs, and more
 - **VPC Security Analysis**: Flow logs, endpoints, peering, NAT gateways, route tables, and network configuration
 - **RDS Security Analysis**: Database encryption, backups, public access, Multi-AZ, deletion protection, and parameter security
+- **Lambda Security Analysis**: Function security, environment variables, permissions, and configuration
+- **Cost Monitoring**: Track AWS spending trends, Reserved Instance coverage, Savings Plans utilization, and resource optimization
 - **Architecture Diagram Generation**: Auto-generate visual representation of AWS infrastructure
 - **Compliance Framework Mapping**: Map findings to NIST, CIS, SOX, and OWASP frameworks with percentage scoring
 - **Multi-Format Reporting**: Generate reports in HTML, Markdown, JSON, CSV, and plain text formats
-- **Executive Dashboard**: Interactive HTML dashboard with security score, charts, and remediation priorities
+- **Executive Dashboard**: Interactive HTML dashboard with security score, cost analysis, charts, and remediation priorities
 - **Compliance Percentage Scoring**: Calculate weighted compliance scores for each framework with risk assessments
 
 ## Latest Scan Results
 
-The tool has been successfully tested on AWS account 028358929215. Recent scan results:
+The tool has been successfully tested on AWS account 028358929215. Recent comprehensive scan results:
 
-### IAM + S3 Combined Scan
-- **129 total security findings**
+### Full Security & Cost Analysis (July 22, 2025)
+- **390 total findings** across all services
 - 1 CRITICAL (Root account usage)
-- 18 HIGH (Including admin privileges, wildcard policies, and public S3 buckets)
-- 61 MEDIUM (Including unencrypted buckets, missing versioning, and weak password policy)
-- 49 LOW (Including SSE-S3 instead of KMS encryption)
+- 47 HIGH (Including admin privileges, wildcard policies, public S3 buckets, underutilized resources)
+- 97 MEDIUM (Including unencrypted resources, missing logging, cost growth anomalies)
+- 216 LOW (Including SSE-S3 encryption, lifecycle policies, tagging issues)
+- 29 INFORMATIONAL (Best practice recommendations)
 
-### S3-only Scan
-- **110 total security findings**
-- 4 HIGH (Public access issues)
-- 58 MEDIUM (Missing encryption, versioning, and logging)
-- 48 LOW (SSE-S3 encryption and lifecycle policies)
+### Key Findings:
+- **Security**: Root account recently used, multiple IAM users with admin privileges, public S3 buckets
+- **Cost Optimization**: Low Reserved Instance utilization, underutilized EC2/RDS instances, untagged resources
+- **Compliance**: Multiple findings mapped to NIST, CIS, SOX frameworks
+- **Services Scanned**: IAM, S3, EC2, VPC, RDS, Lambda, Cost Explorer
+
+### Cost Analysis Highlights:
+- Identified potential monthly savings opportunities
+- Detected services with >50% month-over-month cost growth
+- Found underutilized compute resources (EC2, RDS)
+- Discovered unoptimized storage configurations
 
 View the full reports:
-- [Combined Scan Report](./combined_scan.md)
-- [S3 Scan Report](./s3_test_scan.md)
+- [Comprehensive Security & Cost Report](./combined_scan.md)
+- [Interactive Dashboard](./dashboard.html)
 
 ## Installation
 
@@ -78,6 +88,10 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services iam
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services s3
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services iam,s3,ec2,vpc,rds,lambda
 
+# Run cost analysis
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services cost
+PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --services cost,ec2,s3 --output-format dashboard
+
 # Use a configuration file
 PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli scan --config aws-security-config.yaml
 
@@ -109,9 +123,24 @@ PYTHONPATH=/home/ec2-user/aws-sec python -m src.cli list-services
 ## Known Issues
 
 1. **Import Structure**: The package has relative import issues preventing the installed command from working properly. Use the source method with PYTHONPATH as shown above.
-2. **Limited Scanner Coverage**: Currently IAM, S3, EC2, VPC, RDS, and Lambda scanning are implemented. Additional service scanners (CloudTrail, etc.) are planned.
+2. **Limited Scanner Coverage**: Currently IAM, S3, EC2, VPC, RDS, Lambda, and Cost Explorer scanning are implemented. Additional service scanners (CloudTrail, etc.) are planned.
 
-## Recent Updates (July 21, 2025)
+## Recent Updates (July 22, 2025)
+
+### Version 1.9.0
+- **Added Cost Monitoring and Optimization**: Comprehensive AWS cost analysis and savings recommendations
+  - Cost Explorer API integration for spending trend analysis
+  - Reserved Instance and Savings Plans coverage analysis
+  - Resource utilization monitoring (EC2, RDS, EBS)
+  - Cost anomaly detection
+  - Untagged resource identification for cost allocation
+  - Interactive cost dashboard with potential savings visualization
+  - Added cost optimization findings to existing EC2 and S3 scanners
+- **Enhanced Dashboard**: Added cost analysis section to executive dashboard
+  - Total potential savings display
+  - Cost findings by service breakdown
+  - Top cost optimization opportunities
+  - Visual charts for savings by service
 
 ### Version 1.8.0
 - **Added Lambda Security Scanner**: Comprehensive serverless function security analysis

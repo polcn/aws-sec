@@ -103,6 +103,7 @@ class ScanConfig(BaseModel):
             'rds': {'enabled': True},
             'lambda': {'enabled': True},
             'cloudtrail': {'enabled': False},
+            'cost': {'enabled': False},
         }
         
         # Merge with defaults

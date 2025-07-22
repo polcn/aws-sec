@@ -22,6 +22,8 @@ services:
     enabled: true
   rds:
     enabled: false
+  cost:
+    enabled: true
 risk_scoring:
   critical_weight: 100
   high_weight: 80

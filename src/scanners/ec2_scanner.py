@@ -52,6 +52,9 @@ class EC2Scanner(BaseScanner):
                 # Elastic IP checks
                 findings.extend(self._check_elastic_ips(ec2_client, region))
                 
+                # Cost optimization checks
+                findings.extend(self._check_cost_optimization(ec2_client, region))
+                
             except Exception as e:
                 logger.error(f"Error scanning EC2 in region {region}: {str(e)}")
                 findings.append(Finding(
@@ -566,3 +569,118 @@ class EC2Scanner(BaseScanner):
             if tag.get('Key') == 'Name':
                 return tag.get('Value', 'Unknown')
         return 'Unknown'
+    
+    def _check_cost_optimization(self, ec2_client, region: str) -> List[Finding]:
+        """Check for EC2 cost optimization opportunities"""
+        findings = []
+        
+        try:
+            # Check for stopped instances with attached EBS volumes
+            paginator = ec2_client.get_paginator('describe_instances')
+            stopped_instance_costs = {}
+            
+            for page in paginator.paginate(Filters=[{'Name': 'instance-state-name', 'Values': ['stopped']}]):
+                for reservation in page.get('Reservations', []):
+                    for instance in reservation.get('Instances', []):
+                        instance_id = instance['InstanceId']
+                        instance_type = instance.get('InstanceType', 'Unknown')
+                        
+                        # Calculate EBS costs for stopped instances
+                        ebs_cost = 0
+                        volumes = []
+                        for device in instance.get('BlockDeviceMappings', []):
+                            if 'Ebs' in device:
+                                volumes.append(device['Ebs']['VolumeId'])
+                                # Rough estimate: $0.10 per GB per month for GP2
+                                ebs_cost += 0.10  # Basic cost per volume
+                        
+                        if volumes:
+                            # Get actual volume sizes
+                            try:
+                                volumes_resp = ec2_client.describe_volumes(VolumeIds=volumes)
+                                total_size = sum(v['Size'] for v in volumes_resp['Volumes'])
+                                ebs_cost = total_size * 0.10  # $0.10 per GB per month
+                                
+                                findings.append(Finding(
+                                    title="Stopped Instance with EBS Volumes",
+                                    description=f"Instance {instance_id} ({instance_type}) is stopped but has {len(volumes)} attached EBS volumes totaling {total_size} GB",
+                                    severity=Severity.MEDIUM,
+                                    category=Category.COST_OPTIMIZATION,
+                                    resource_type="AWS::EC2::Instance",
+                                    resource_id=instance_id,
+                                    region=region,
+                                    recommendation="Consider creating an AMI and terminating the instance, or detaching unused volumes",
+                                    impact=f"Approximately ${ebs_cost:.2f} per month in EBS storage costs for stopped instance",
+                                    evidence={
+                                        'instance_type': instance_type,
+                                        'volume_count': len(volumes),
+                                        'total_size_gb': total_size,
+                                        'monthly_cost': f"${ebs_cost:.2f}"
+                                    }
+                                ))
+                            except Exception as e:
+                                logger.warning(f"Could not get volume details for {instance_id}: {str(e)}")
+            
+            # Check for previous generation instance types
+            all_instances = ec2_client.describe_instances(
+                Filters=[{'Name': 'instance-state-name', 'Values': ['running']}]
+            )
+            
+            previous_gen_types = {
+                'm1', 'm2', 'm3', 'c1', 'c3', 'cc2', 'cr1', 'hi1', 'hs1', 't1', 'g2', 'i2', 'r3'
+            }
+            
+            for reservation in all_instances.get('Reservations', []):
+                for instance in reservation.get('Instances', []):
+                    instance_id = instance['InstanceId']
+                    instance_type = instance.get('InstanceType', '')
+                    
+                    # Check if it's a previous generation instance
+                    instance_family = instance_type.split('.')[0] if '.' in instance_type else instance_type
+                    if instance_family in previous_gen_types:
+                        findings.append(Finding(
+                            title="Previous Generation Instance Type",
+                            description=f"Instance {instance_id} is using previous generation instance type {instance_type}",
+                            severity=Severity.MEDIUM,
+                            category=Category.COST_OPTIMIZATION,
+                            resource_type="AWS::EC2::Instance",
+                            resource_id=instance_id,
+                            region=region,
+                            recommendation=f"Upgrade to current generation instance type for better performance and cost efficiency",
+                            impact="Previous generation instances typically cost 10-20% more than current generation equivalents",
+                            evidence={
+                                'instance_type': instance_type,
+                                'instance_family': instance_family
+                            }
+                        ))
+            
+            # Check for instances without reserved instances or savings plans in production
+            # This is a simplified check - in reality you'd cross-reference with RI/SP coverage
+            production_instances = []
+            for reservation in all_instances.get('Reservations', []):
+                for instance in reservation.get('Instances', []):
+                    tags = {tag['Key']: tag['Value'] for tag in instance.get('Tags', [])}
+                    if tags.get('Environment', '').lower() in ['production', 'prod']:
+                        production_instances.append(instance['InstanceId'])
+            
+            if len(production_instances) > 5:  # Only flag if there are multiple production instances
+                findings.append(Finding(
+                    title="Production Instances Without Cost Optimization",
+                    description=f"Found {len(production_instances)} production instances that may benefit from Reserved Instances or Savings Plans",
+                    severity=Severity.LOW,
+                    category=Category.COST_OPTIMIZATION,
+                    resource_type="AWS::EC2::Instance",
+                    resource_id="multiple",
+                    region=region,
+                    recommendation="Consider purchasing Reserved Instances or Savings Plans for production workloads",
+                    impact="Potential savings of 30-72% on compute costs with commitment discounts",
+                    evidence={
+                        'instance_count': len(production_instances),
+                        'sample_instances': production_instances[:5]
+                    }
+                ))
+                
+        except Exception as e:
+            logger.error(f"Error checking cost optimization in region {region}: {str(e)}")
+        
+        return findings
